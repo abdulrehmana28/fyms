@@ -79,7 +79,7 @@ const LoginPage = () => {
         case "Admin":
           navigate("/admin");
           break;
-          // Todo: Properly handle unexpected roles
+        // Todo: Properly handle unexpected roles
         default:
           navigate("/login");
       }
@@ -166,7 +166,6 @@ const LoginPage = () => {
                   <option value="Admin">Admin</option>
                 </select>
               </div>
-
               <button
                 type="submit"
                 className="w-full btn btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
