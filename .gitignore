@@ -96,7 +96,8 @@ public
 # Stores VSCode versions used for testing VSCode extensions
 .vscode-test
 .idea/
-.vscode/
+.vscode/*
+!.vscode/extensions.json
 
 # Temporary folders
 tmp/
