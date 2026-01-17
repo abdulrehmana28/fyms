@@ -7,11 +7,12 @@ import { ErrorHandler } from "../middlewares/error.middleware.js";
 
 config();
 
+// Authentication middleware to verify JWT token user is logged in or not
+
 const authMiddleware = asyncHandler(async (req, res, next) => {
   const { token } = req.cookies;
-  console.log("token is this : "+ token);
-  console.log("cookie is this : "+ req.cookies);
-  
+  console.log("token is this : " + token);
+  console.log("cookie is this : " + req.cookies);
 
   if (!token) {
     return next(
@@ -35,4 +36,20 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
   next();
 });
 
-export { authMiddleware };
+// Authorization middleware checking user roles
+
+const authorized = (...roles) => {
+  return (req, res, next) => {
+    if (!roles.includes(req.user.role)) {
+      return next(
+        new ErrorHandler(
+          `Role (${req.user.role}) is not authorized to access this resource`,
+          403
+        )
+      );
+    }
+    next();
+  };
+};
+
+export { authMiddleware, authorized };

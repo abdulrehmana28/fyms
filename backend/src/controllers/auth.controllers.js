@@ -4,7 +4,7 @@ import { generateToken } from "../utils/generateToken.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import { sendEmail } from "../services/emailServices.js";
+import { sendEmail } from "../services/email.services.js";
 import { ErrorHandler } from "../middlewares/error.middleware.js";
 import { generateForgotPasswordEmailTemplate } from "../utils/emailTemplates.js";
 
