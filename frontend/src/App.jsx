@@ -36,6 +36,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getUser } from "./store/slices/authSlice";
 import { Loader } from "lucide-react";
+import { getAllUsers } from "./store/slices/adminSlice";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const authUser = useSelector((state) => state.auth.authUser);
@@ -59,6 +60,12 @@ const App = () => {
   useEffect(() => {
     dispatch(getUser());
   }, [dispatch]);
+
+  useEffect(() => {
+    if (authUser?.role === "Admin") {
+      dispatch(getAllUsers());
+    }
+  }, [authUser]);
 
   if (isCheckingAuth && !authUser) {
     return (
@@ -149,14 +156,14 @@ const App = () => {
           </Route>
 
           <Route
-            path="/admin/*"
+            path="/Admin/*"
             element={
-              <ProtectedRoute allowedRoles={["admin"]}>
-                <DashboardLayout />
+              <ProtectedRoute allowedRoles={["Admin"]}>
+                <DashboardLayout userRole={"Admin"} />
               </ProtectedRoute>
             }
           >
-            <Route path="" element={<AdminDashboard />} />
+            <Route index element={<AdminDashboard />} />
             <Route path="students" element={<ManageStudents />} />
             <Route path="teachers" element={<ManageTeachers />} />
             <Route path="assign-supervisor" element={<AssignSupervisor />} />

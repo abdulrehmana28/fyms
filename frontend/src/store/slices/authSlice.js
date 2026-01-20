@@ -95,7 +95,7 @@ const getUser = createAsyncThunk("auth/getUser", async (_, thunkAPI) => {
 
 const logout = createAsyncThunk("auth/logout", async (_, thunkAPI) => {
   try {
-    const response = await axiosInstance.put(
+    const response = await axiosInstance.post(
       `/auth/logout`,
       {},
       {

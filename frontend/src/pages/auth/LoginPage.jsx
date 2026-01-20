@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../../store/slices/authSlice";
-import { BookOpen, Loader } from "lucide-react";
+import { Banana, Loader } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const LoginPage = () => {
@@ -94,7 +94,7 @@ const LoginPage = () => {
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500 rounded-full mb-4">
               {/* TODO: Add custom icon or logo */}
-              <BookOpen className="w-8 text-white" />
+              <Banana className="w-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-slate-800">
               CapTrak Final Year Project Management System

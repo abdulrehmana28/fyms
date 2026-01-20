@@ -42,16 +42,16 @@ const updateStudent = asyncHandler(async (req, res, next) => {
   const updateStudentData = { ...req.body };
   delete updateStudentData.role; // Prevent role update
 
-  const updatedStudent = await userService.updateUser(id, updateStudentData);
+  const user = await userService.updateUser(id, updateStudentData);
 
-  if (!updatedStudent) {
+  if (!user) {
     return next(new ErrorHandler("Student not found", 404));
   }
 
   res.status(200).json({
     success: true,
     message: "Student updated successfully",
-    data: { updatedStudent },
+    data: { user },
   });
 });
 
@@ -101,8 +101,8 @@ const createTeacher = asyncHandler(async (req, res, next) => {
     expertise: Array.isArray(expertise)
       ? expertise
       : typeof expertise === "string" && expertise.trim() !== ""
-      ? expertise.split(",").map((exp) => exp.trim())
-      : [],
+        ? expertise.split(",").map((exp) => exp.trim())
+        : [],
     role: "Teacher",
   });
 
@@ -118,16 +118,16 @@ const updateTeacher = asyncHandler(async (req, res, next) => {
   const updateTeacherData = { ...req.body };
   delete updateTeacherData.role; // Prevent role update
 
-  const updatedTeacher = await userService.updateUser(id, updateTeacherData);
+  const user = await userService.updateUser(id, updateTeacherData);
 
-  if (!updatedTeacher) {
+  if (!user) {
     return next(new ErrorHandler("Teacher not found", 404));
   }
 
   res.status(200).json({
     success: true,
     message: "Teacher updated successfully",
-    data: { updatedTeacher },
+    data: { user },
   });
 });
 
@@ -162,13 +162,13 @@ const getAllUsers = asyncHandler(async (req, res, next) => {
 });
 
 // TODO: Implement the following admin controllers
-const getAllProjects = asyncHandler(async (req, res, next) => {});
+const getAllProjects = asyncHandler(async (req, res, next) => { });
 
-const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {});
+const assignSupervisorToStudent = asyncHandler(async (req, res, next) => { });
 
-const assignProjectToStudent = asyncHandler(async (req, res, next) => {});
+const assignProjectToStudent = asyncHandler(async (req, res, next) => { });
 
-const getAllDashboardStats = asyncHandler(async (req, res, next) => {});
+const getAllDashboardStats = asyncHandler(async (req, res, next) => { });
 
 export {
   createStudent,
