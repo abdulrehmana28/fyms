@@ -4,8 +4,13 @@ import { config } from "dotenv";
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
 import { authMiddleware } from "./middlewares/auth.middleware.js";
-
+import path from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
 config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 5000;
 
@@ -16,24 +21,37 @@ app.use(
     origin: [process.env.FRONTEND_URL],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
-  })
+  }),
 );
+
+const uploadDir = path.join(__dirname, "../uploads");
+const tempDir = path.join(__dirname, "../temp");
+
+if (!fs.existsSync(uploadDir, { recursive: true })) {
+  fs.mkdirSync(uploadDir);
+}
+
+if (!fs.existsSync(tempDir, { recursive: true })) {
+  fs.mkdirSync(tempDir);
+}
 
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// **********************
-// Error Middleware must be the last middleware
-app.use(errorMiddleware);
-// ----------------------
-
 // routes imports
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
+import studentRoutes from "./routes/student.routes.js";
 
 // routes usage
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1/student", studentRoutes);
+
+// **********************
+// Error Middleware must be the last middleware
+app.use(errorMiddleware);
+// ----------------------
 
 export default app;

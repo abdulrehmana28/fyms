@@ -124,39 +124,41 @@ const App = () => {
             }
           />
 
-          {/* Protected Dashboard Routes */}
+          {/* Student Routes Protected Dashboard Routes */}
           <Route
             path="/student/*"
             element={
-              <ProtectedRoute allowedRoles={["student"]}>
-                <DashboardLayout />
+              <ProtectedRoute allowedRoles={["Student"]}>
+                <DashboardLayout userRole={"Student"} />
               </ProtectedRoute>
             }
           >
-            <Route path="" element={<StudentDashboard />} />
-            <Route path="proposal" element={<SubmitProposal />} />
-            <Route path="files" element={<UploadFiles />} />
+            <Route index element={<StudentDashboard />} />
+            <Route path="submit-proposal" element={<SubmitProposal />} />
+            <Route path="upload-files" element={<UploadFiles />} />
             <Route path="supervisor" element={<SupervisorPage />} />
             <Route path="feedback" element={<FeedbackPage />} />
             <Route path="notifications" element={<NotificationsPage />} />
           </Route>
 
+          {/* Teacher Routes */}
           <Route
             path="/teacher/*"
             element={
-              <ProtectedRoute allowedRoles={["teacher"]}>
-                <DashboardLayout />
+              <ProtectedRoute allowedRoles={["Teacher"]}>
+                <DashboardLayout userRole={"Teacher"} />
               </ProtectedRoute>
             }
           >
-            <Route path="" element={<TeacherDashboard />} />
+            <Route index element={<TeacherDashboard />} />
             <Route path="requests" element={<PendingRequests />} />
             <Route path="assigned-students" element={<AssignedStudents />} />
             <Route path="files" element={<TeacherFiles />} />
           </Route>
 
+          {/* Admin Routes */}
           <Route
-            path="/Admin/*"
+            path="/admin/*"
             element={
               <ProtectedRoute allowedRoles={["Admin"]}>
                 <DashboardLayout userRole={"Admin"} />
