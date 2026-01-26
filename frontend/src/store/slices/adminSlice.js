@@ -143,6 +143,44 @@ const deleteTeacher = createAsyncThunk(
   },
 );
 
+// Project Actions
+
+const getAllProjects = createAsyncThunk(
+  "admin/getAllProjects",
+  async (_, thunkAPI) => {
+    try {
+      const response = await axiosInstance.get(`/admin/projects/`);
+      return response.data.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch Projects");
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch Projects",
+      );
+    }
+  },
+);
+
+// Admin Action
+
+const getDashboardStats = createAsyncThunk(
+  "admin/getDashboardStats",
+  async (_, thunkAPI) => {
+    try {
+      const response = await axiosInstance.get(`/admin/fetch-dashboard-stats/`);
+      return response.data.data.stats;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to fetch Admin Dashboard Stats",
+      );
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message ||
+          "Failed to fetch Admin Dashboard Stats",
+      );
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -159,6 +197,11 @@ const adminSlice = createSlice({
     // getAllUsers reducer
     builder.addCase(getAllUsers.fulfilled, (state, action) => {
       state.users = action.payload;
+    });
+
+    // getAllProjects reducer
+    builder.addCase(getAllProjects.fulfilled, (state, action) => {
+      state.projects = action.payload.projects;
     });
 
     // student reducers
@@ -206,16 +249,22 @@ const adminSlice = createSlice({
           );
         }
       });
+    // Admin Dashboard Stats reducer
+    builder.addCase(getDashboardStats.fulfilled, (state, action) => {
+      state.stats = action.payload;
+    });
   },
 });
 
 export default adminSlice.reducer;
 export {
   getAllUsers,
+  getAllProjects,
   createStudent,
   updateStudent,
   deleteStudent,
   createTeacher,
   updateTeacher,
   deleteTeacher,
+  getDashboardStats,
 };

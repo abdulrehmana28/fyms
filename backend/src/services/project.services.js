@@ -14,12 +14,29 @@ const createProject = async (projectData) => {
 const getProjectById = async (projectId) => {
   const project = await Project.findById(projectId)
     .populate("student", "name email")
-    .populate("supervisor", "name email");
+    .populate("supervisor", "name email")
+    .populate("feedback.supervisorId", "name email");
 
   if (!project) {
     throw new ErrorHandler("Project not found", 404);
   }
   return project;
+};
+
+const getAllProjects = async () => {
+  const projects = await Project.find()
+    .populate("student", "name email")
+    .populate("supervisor", "name email")
+    .sort({ createdAt: -1 });
+
+  if (!projects) {
+    throw new ErrorHandler("No projects found", 404);
+  }
+  // TODO: check if any error with the return type in any function
+  // TODO: Array OR Object
+  // TODO: changed to return projects[] directly
+  // TODO: previously was: return { projects };
+  return projects;
 };
 
 const addFilesToProject = async (projectId, files) => {
@@ -45,4 +62,5 @@ export {
   createProject,
   getProjectById,
   addFilesToProject,
+  getAllProjects,
 };

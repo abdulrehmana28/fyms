@@ -76,7 +76,13 @@ const SupervisorPage = () => {
         teacherId: selectedSupervisor._id,
         message,
       }),
-    );
+    ).then((response) => { 
+      if (response.type === "student/requestSupervisor/fulfilled") {
+        setShowRequestModal(false);
+        // setSelectedSupervisor(null);
+        setRequestMessage("");
+      }
+    });
   };
 
   return (

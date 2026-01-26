@@ -7,6 +7,9 @@ import {
   getAvailableSupervisors,
   getSupervisor,
   requestSupervisor,
+  getFeedback,
+  getDashBoardStats,
+  downloadProjectFiles,
 } from "../controllers/student.controllers.js";
 
 import { authMiddleware, authorized } from "../middlewares/auth.middleware.js";
@@ -64,6 +67,30 @@ router.post(
   authMiddleware,
   authorized("Student"),
   requestSupervisor,
+);
+
+// Route to get feedback for a project
+router.get(
+  "/feedback/:projectId",
+  authMiddleware,
+  authorized("Student"),
+  getFeedback,
+);
+
+// Route to get dashboard statistics
+router.get(
+  "/fetch-dashboard-stats",
+  authMiddleware,
+  authorized("Student"),
+  getDashBoardStats,
+);
+
+// Route to download project files
+router.get(
+  "/projects/download/:projectId/:fileId",
+  authMiddleware,
+  authorized("Student"),
+  downloadProjectFiles,
 );
 
 export default router;

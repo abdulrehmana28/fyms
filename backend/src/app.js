@@ -43,12 +43,14 @@ app.use(express.urlencoded({ extended: true }));
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import studentRoutes from "./routes/student.routes.js";
-
+import notificationRoutes from "./routes/notification.routes.js";
+import projectRoutes from "./routes/project.routes.js";
 // routes usage
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1/student", studentRoutes);
-
+app.use("/api/v1/notification", notificationRoutes);
+app.use("/api/v1/project", projectRoutes);
 // **********************
 // Error Middleware must be the last middleware
 app.use(errorMiddleware);

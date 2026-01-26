@@ -10,6 +10,9 @@ import * as userService from "../services/user.services.js";
 import * as projectService from "../services/project.services.js";
 import * as requestService from "../services/request.services.js";
 import * as NotificationService from "../services/notification.services.js";
+import * as fileService from "../services/file.services.js";
+import { Project } from "../models/project.models.js";
+import { Notification } from "../models/notification.models.js";
 
 const getStudentProjects = asyncHandler(async (req, res, next) => {
   const studentId = req.user._id;
@@ -46,6 +49,11 @@ const submitProposal = asyncHandler(async (req, res, next) => {
     );
   }
 
+  // If the existing project is rejected, delete it before creating a new one
+  if (existingProject && existingProject.status === "Rejected") {
+    await Project.findByIdAndDelete(existingProject._id);
+  }
+
   const projectData = {
     student: studentId,
     title,
@@ -68,7 +76,7 @@ const uploadProjectFiles = asyncHandler(async (req, res, next) => {
   const studentId = req.user._id;
   const project = await projectService.getProjectById(projectId);
 
-  if (!project || project.student.toString() !== studentId.toString()) {
+  if (!project || project.student?._id.toString() !== studentId.toString()) {
     return next(
       new ErrorHandler(
         "Project not found or you do not have permission to upload files to this project",
@@ -171,6 +179,115 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
   });
 });
 
+const getDashBoardStats = asyncHandler(async (req, res, next) => {
+  const studentId = req.user._id;
+  const project = await Project.findOne({ student: studentId })
+    .sort({
+      createdAt: -1,
+    })
+    .populate("supervisor", "name")
+    .lean();
+
+  const presentDate = new Date();
+
+  const upcomingDeadlines = await Project.find({
+    student: studentId,
+    deadlines: { $gte: presentDate },
+  })
+    .select("title description")
+    .sort({
+      deadlines: 1,
+    })
+    .limit(3)
+    .lean();
+
+  const topNotifications = await Notification.find({ user: studentId })
+    .populate("user", "name")
+    .sort({
+      createdAt: -1,
+    })
+    .limit(3)
+    .lean();
+
+  const feedbackNotifications =
+    project?.feedback && project?.feedback.length > 0
+      ? [...project.feedback]
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 2)
+      : [];
+
+  const supervisorName = project?.supervisor?.name || null;
+
+  res.status(200).json({
+    success: true,
+    message: "Dashboard stats fetched successfully",
+    data: {
+      project,
+      upcomingDeadlines,
+      topNotifications,
+      feedbackNotifications,
+      supervisorName,
+    },
+  });
+});
+
+const getFeedback = asyncHandler(async (req, res, next) => {
+  const { projectId } = req.params;
+  const studentId = req.user._id;
+  const project = await projectService.getProjectById(projectId);
+
+  if (!project || project.student._id.toString() !== studentId.toString()) {
+    return next(
+      new ErrorHandler(
+        "Project not found or you do not have permission to view feedback for this project",
+        404,
+      ),
+    );
+  }
+
+  const sortedFeedback = project.feedback
+    .sort(
+      (feedback1, feedback2) =>
+        new Date(feedback2.createdAt) - new Date(feedback1.createdAt),
+    )
+    .map((feedback) => ({
+      _id: feedback._id,
+      title: feedback.title,
+      message: feedback.message,
+      type: feedback.type,
+      supervisorName: feedback.supervisorId?.name,
+      supervisorEmail: feedback.supervisorId?.email,
+      createdAt: feedback.createdAt,
+    }));
+
+  res.status(200).json({
+    success: true,
+    data: { feedback: sortedFeedback },
+  });
+});
+
+const downloadProjectFiles = asyncHandler(async (req, res, next) => {
+  const { projectId, fileId } = req.params;
+  const studentId = req.user._id;
+  const project = await projectService.getProjectById(projectId);
+
+  if (!project || project.student._id.toString() !== studentId.toString()) {
+    return next(
+      new ErrorHandler(
+        "Project not found or you do not have permission to download files from this project",
+        404,
+      ),
+    );
+  }
+
+  const file = project.files.id(fileId);
+  if (!file) {
+    return next(new ErrorHandler("File not found", 404));
+  }
+
+  fileService.streamDownload(file.fileUrl, res, file.originalName);
+});
+
 export {
   getStudentProjects,
   submitProposal,
@@ -178,4 +295,7 @@ export {
   getAvailableSupervisors,
   getSupervisor,
   requestSupervisor,
+  getDashBoardStats,
+  getFeedback,
+  downloadProjectFiles,
 };

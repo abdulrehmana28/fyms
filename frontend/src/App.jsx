@@ -36,7 +36,7 @@ import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { getUser } from "./store/slices/authSlice";
 import { Loader } from "lucide-react";
-import { getAllUsers } from "./store/slices/adminSlice";
+import { getAllProjects, getAllUsers } from "./store/slices/adminSlice";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const authUser = useSelector((state) => state.auth.authUser);
@@ -64,6 +64,7 @@ const App = () => {
   useEffect(() => {
     if (authUser?.role === "Admin") {
       dispatch(getAllUsers());
+      dispatch(getAllProjects());
     }
   }, [authUser]);
 

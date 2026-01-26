@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import {
   fetchProject,
   uploadProjectFiles,
+  downloadProjectFiles,
 } from "../../store/slices/studentSlice";
 import { File, FileCodeIcon, FilePlus, FileText, FileX2 } from "lucide-react";
 
@@ -71,6 +72,29 @@ const UploadFiles = () => {
             : "text-slate-500";
 
     return <Icon className={`w-8 h-8 ${color}`} />;
+  };
+
+  const handleDownloadFile = async (file) => {
+    if (!file?.projectId || !file?.fileId) return;
+
+    // Dispatch download action
+    await dispatch(
+      downloadProjectFiles({
+        projectId: project._id,
+        fileId: file._id,
+      }),
+    ).then((response) => {
+      // Create a blob link to download
+      const { blob } = response.payload;
+      const url = window.URL.createObjectURL(new Blob([blob]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", file.name || "download");
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    });
   };
 
   return (
@@ -245,6 +269,15 @@ const UploadFiles = () => {
                       </div>
                       {/* 12:12:34 */}
                     </div>
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => handleDownloadFile(file)}
+                      className="btn-outline btn-small"
+                    >
+                      Download
+                    </button>
                   </div>
                 </div>
               ))}

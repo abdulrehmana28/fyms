@@ -21,4 +21,32 @@ const notifyUser = async (
   });
 };
 
-export { createNotification, notifyUser };
+const markAsRead = async (notificationId, userId) => {
+  return await Notification.findOneAndUpdate(
+    { _id: notificationId, user: userId },
+    { isRead: true },
+    { new: true },
+  );
+};
+
+const markAllAsRead = async (userId) => {
+  return await Notification.updateMany(
+    { user: userId, isRead: false },
+    { isRead: true },
+  );
+};
+
+const deleteNotification = async (notificationId, userId) => {
+  return await Notification.findOneAndDelete({
+    _id: notificationId,
+    user: userId,
+  });
+};
+
+export {
+  createNotification,
+  notifyUser,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+};

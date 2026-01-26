@@ -1,4 +1,6 @@
 import { User } from "../models/user.models.js";
+import { Project } from "../models/project.models.js";
+import { SupervisorRequest } from "../models/supervisorRequest.models.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { generateToken } from "../utils/generateToken.js";
 import bcrypt from "bcrypt";
@@ -7,7 +9,7 @@ import crypto from "crypto";
 import { sendEmail } from "../services/email.services.js";
 import { ErrorHandler } from "../middlewares/error.middleware.js";
 import * as userService from "../services/user.services.js";
-
+import * as projectService from "../services/project.services.js";
 
 // ************************
 // Admin Controllers
@@ -161,14 +163,53 @@ const getAllUsers = asyncHandler(async (req, res, next) => {
   });
 });
 
+const getAllProjects = asyncHandler(async (req, res, next) => {
+  const projects = await projectService.getAllProjects();
+
+  res.status(200).json({
+    success: true,
+    data: { projects },
+    message: "Projects retrieved successfully",
+  });
+});
+
 // TODO: Implement the following admin controllers
-const getAllProjects = asyncHandler(async (req, res, next) => { });
+// Admin Dashboard Controllers
 
-const assignSupervisorToStudent = asyncHandler(async (req, res, next) => { });
+const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {});
 
-const assignProjectToStudent = asyncHandler(async (req, res, next) => { });
+const assignProjectToStudent = asyncHandler(async (req, res, next) => {});
 
-const getAllDashboardStats = asyncHandler(async (req, res, next) => { });
+const getAllDashboardStats = asyncHandler(async (req, res, next) => {
+  const [
+    totalStudents,
+    totalTeachers,
+    totalProjects,
+    pendingRequests,
+    completedProjects,
+    pendingProjects,
+  ] = await Promise.all([
+    User.countDocuments({ role: "Student" }),
+    User.countDocuments({ role: "Teacher" }),
+    Project.countDocuments(),
+    SupervisorRequest.countDocuments({ status: "Pending" }),
+    Project.countDocuments({ status: "Completed" }),
+    Project.countDocuments({ status: "Pending" }),
+  ]);
+
+  res.status(200).json({
+    success: true,
+    message: "Admin Dashboard stats retrieved successfully",
+    data: {
+      totalStudents,
+      totalTeachers,
+      totalProjects,
+      pendingRequests,
+      completedProjects,
+      pendingProjects,
+    },
+  });
+});
 
 export {
   createStudent,
@@ -178,4 +219,6 @@ export {
   updateTeacher,
   deleteTeacher,
   getAllUsers,
+  getAllProjects,
+  getAllDashboardStats,
 };

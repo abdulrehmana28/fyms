@@ -8,6 +8,8 @@ import {
   updateTeacher,
   deleteTeacher,
   getAllUsers,
+  getAllProjects,
+  getAllDashboardStats,
 } from "../controllers/admin.controllers.js";
 
 import { authMiddleware, authorized } from "../middlewares/auth.middleware.js";
@@ -26,7 +28,7 @@ router.post(
   "/create-student",
   authMiddleware,
   authorized("Admin"),
-  createStudent
+  createStudent,
 );
 
 // Route to update student details
@@ -34,7 +36,7 @@ router.put(
   "/update-student/:id",
   authMiddleware,
   authorized("Admin"),
-  updateStudent
+  updateStudent,
 );
 
 // Route to delete a student
@@ -42,7 +44,7 @@ router.delete(
   "/delete-student/:id",
   authMiddleware,
   authorized("Admin"),
-  deleteStudent
+  deleteStudent,
 );
 
 // **********************
@@ -54,7 +56,7 @@ router.post(
   "/create-teacher",
   authMiddleware,
   authorized("Admin"),
-  createTeacher
+  createTeacher,
 );
 
 // Route to update Teacher details
@@ -62,7 +64,7 @@ router.put(
   "/update-teacher/:id",
   authMiddleware,
   authorized("Admin"),
-  updateTeacher
+  updateTeacher,
 );
 
 // Route to delete a Teacher
@@ -70,7 +72,24 @@ router.delete(
   "/delete-teacher/:id",
   authMiddleware,
   authorized("Admin"),
-  deleteTeacher
+  deleteTeacher,
+);
+
+// **********************
+// Admin Routes for Project Management
+// ----------------------
+
+// Route to get all projects
+router.get("/projects/", authMiddleware, authorized("Admin"), getAllProjects);
+
+// !16:52:51
+
+// Route to get dashboard stats
+router.get(
+  "/fetch-dashboard-stats/",
+  authMiddleware,
+  authorized("Admin"),
+  getAllDashboardStats,
 );
 
 export default router;
