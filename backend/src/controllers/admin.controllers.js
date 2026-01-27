@@ -10,6 +10,7 @@ import { sendEmail } from "../services/email.services.js";
 import { ErrorHandler } from "../middlewares/error.middleware.js";
 import * as userService from "../services/user.services.js";
 import * as projectService from "../services/project.services.js";
+import * as NotificationService from "../services/notification.services.js";
 
 // ************************
 // Admin Controllers
@@ -176,7 +177,83 @@ const getAllProjects = asyncHandler(async (req, res, next) => {
 // TODO: Implement the following admin controllers
 // Admin Dashboard Controllers
 
-const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {});
+const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
+  const { studentId, supervisorId } = req.body;
+
+  if (!studentId || !supervisorId) {
+    return next(
+      new ErrorHandler(
+        "Both studentId and supervisorId are required to assign a supervisor.",
+        400,
+      ),
+    );
+  }
+
+  const project = await Project.findOne({ student: studentId });
+
+  if (!project) {
+    return next(
+      new ErrorHandler("No project found for the given studentId.", 404),
+    );
+  }
+
+  if (project.supervisor !== null) {
+    return next(
+      new ErrorHandler(
+        "Supervisor has already been assigned to this student.",
+        400,
+      ),
+    );
+  }
+
+  if (project.status !== "Approved") {
+    return next(
+      new ErrorHandler(
+        "Cannot assign supervisor to a project that is not approved.",
+        400,
+      ),
+    );
+  } else if (project.status === "Pending" || project.status === "Rejected") {
+    return next(
+      new ErrorHandler(
+        "Cannot assign supervisor to a project that is still pending or rejected.",
+        400,
+      ),
+    );
+  }
+
+  const { student, supervisor } = await userService.assignSupervisorDirectly(
+    studentId,
+    supervisorId,
+  );
+
+  project.supervisor = supervisor;
+  await project.save();
+
+  await NotificationService.notifyUser(
+    studentId,
+    `${supervisor.name}You have been assigned as supervisor for your project.`,
+    "Approval",
+    "/student/status",
+    "High",
+  );
+
+  await NotificationService.notifyUser(
+    supervisorId,
+    `The student ${student.name} has been assigned to you for FYP supervision.`,
+    "Comment",
+    "/teacher/status",
+    "High",
+  );
+
+  res.status(200).json({
+    success: true,
+    data: { student, supervisor },
+    message: "Supervisor assigned successfully",
+  });
+
+  //
+});
 
 const assignProjectToStudent = asyncHandler(async (req, res, next) => {});
 
@@ -221,4 +298,5 @@ export {
   getAllUsers,
   getAllProjects,
   getAllDashboardStats,
+  assignSupervisorToStudent,
 };

@@ -181,6 +181,30 @@ const getDashboardStats = createAsyncThunk(
   },
 );
 
+const assignSupervisor = createAsyncThunk(
+  "admin/assignSupervisor",
+  async (data, thunkAPI) => {
+    try {
+      const response = await axiosInstance.post(
+        `/admin/assign-supervisor/`,
+        data,
+      );
+
+      toast.success(
+        response.data.message || "Supervisor assigned successfully",
+      );
+      return response.data.data;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to assign supervisor",
+      );
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to assign supervisor",
+      );
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -267,4 +291,5 @@ export {
   updateTeacher,
   deleteTeacher,
   getDashboardStats,
+  assignSupervisor,
 };

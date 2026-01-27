@@ -24,7 +24,7 @@ const updateUser = async (id, updateData) => {
 const getUserById = async (id) => {
   try {
     const user = await User.findById(id).select(
-      "-password -resetPasswordToken -resetPasswordExpire"
+      "-password -resetPasswordToken -resetPasswordExpire",
     );
     return user;
   } catch (error) {
@@ -53,11 +53,37 @@ const getAllUsers = async () => {
       .sort({ createdAt: -1 });
 
     //   console.log(users);
-      
+
     return users;
   } catch (error) {
     throw new Error(`Error retrieving users: ${error.message}`);
   }
 };
 
-export { createUser, updateUser, getUserById, deleteUser, getAllUsers };
+const assignSupervisorDirectly = async (studentId, supervisorId) => {
+  const student = await User.findOne({ _id: studentId, role: "Student" });
+  const supervisor = await User.findOne({ _id: supervisorId, role: "Teacher" });
+
+  if (!student || !supervisor) {
+    throw new Error("Invalid student or supervisor ID");
+  }
+
+  if (!supervisor.hasCapacity()) {
+    throw new Error("Supervisor has reached maximum student capacity");
+  }
+
+  student.supervisor = supervisor._id;
+  supervisor.assignedStudents.push(student._id);
+  await Promise.all([student.save(), supervisor.save()]);
+
+  return { student, supervisor };
+};
+
+export {
+  createUser,
+  updateUser,
+  getUserById,
+  deleteUser,
+  getAllUsers,
+  assignSupervisorDirectly,
+};

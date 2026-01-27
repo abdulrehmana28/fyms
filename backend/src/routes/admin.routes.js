@@ -10,6 +10,7 @@ import {
   getAllUsers,
   getAllProjects,
   getAllDashboardStats,
+  assignSupervisorToStudent,
 } from "../controllers/admin.controllers.js";
 
 import { authMiddleware, authorized } from "../middlewares/auth.middleware.js";
@@ -82,14 +83,20 @@ router.delete(
 // Route to get all projects
 router.get("/projects/", authMiddleware, authorized("Admin"), getAllProjects);
 
-// !16:52:51
-
 // Route to get dashboard stats
 router.get(
   "/fetch-dashboard-stats/",
   authMiddleware,
   authorized("Admin"),
   getAllDashboardStats,
+);
+
+// Route to assign supervisor to student
+router.post(
+  "/assign-supervisor",
+  authMiddleware,
+  authorized("Admin"),
+  assignSupervisorToStudent,
 );
 
 export default router;

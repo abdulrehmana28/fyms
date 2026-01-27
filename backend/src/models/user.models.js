@@ -72,7 +72,7 @@ const userSchema = new mongoose.Schema(
 
   {
     timestamps: true,
-  }
+  },
 );
 
 // add password hashing on pre hook
@@ -112,5 +112,10 @@ userSchema.methods.getResetPasswordToken = function () {
 //     }
 //   );
 // };
+
+userSchema.methods.hasCapacity = function () {
+  if (this.role !== UserRoleEnums.TEACHER) return false;
+  return this.assignedStudents.length < this.maxStudents;
+};
 
 export const User = mongoose.model("User", userSchema);
