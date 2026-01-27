@@ -189,6 +189,16 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
     );
   }
 
+  const supervisorUser = await userService.getUserById(supervisorId);
+
+  if (!supervisorUser) {
+    return next(new ErrorHandler("supervisorId must be a valid Teacher", 400));
+  }
+
+  if (supervisorUser.role !== "Teacher") {
+    return next(new ErrorHandler("supervisorId must be a valid Teacher", 400));
+  }
+
   const project = await Project.findOne({ student: studentId });
 
   if (!project) {
@@ -213,13 +223,6 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
         400,
       ),
     );
-  } else if (project.status === "Pending" || project.status === "Rejected") {
-    return next(
-      new ErrorHandler(
-        "Cannot assign supervisor to a project that is still pending or rejected.",
-        400,
-      ),
-    );
   }
 
   const { student, supervisor } = await userService.assignSupervisorDirectly(
@@ -237,12 +240,11 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
     "/student/status",
     "High",
   );
-
   await NotificationService.notifyUser(
-    supervisorId,
-    `The student ${student.name} has been assigned to you for FYP supervision.`,
-    "Comment",
-    "/teacher/status",
+    studentId,
+    `${supervisor.name} has been assigned as supervisor for your project.`,
+    "Approval",
+    "/student/status",
     "High",
   );
 

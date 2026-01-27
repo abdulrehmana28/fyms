@@ -25,7 +25,7 @@ const createDeadline = asyncHandler(async (req, res, next) => {
   const deadlineData = {
     name: name, // name is in the schema
     dueDate: new Date(dueDate),
-    project: project || null,
+    project: project,
     createdBy: req.user._id,
   };
 

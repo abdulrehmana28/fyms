@@ -17,7 +17,7 @@ const AssignSupervisor = () => {
     if (!users || users.length === 0) {
       dispatch(getAllUsers());
     }
-  }, [dispatch]);
+  }, [dispatch, users]);
 
   const teachers = useMemo(() => {
     const teacherUsers = (users || []).filter(
@@ -28,7 +28,7 @@ const AssignSupervisor = () => {
       assignedCount: Array.isArray(teacher.assignedStudents)
         ? teacher.assignedStudents.length
         : 0,
-      canTakeMore:
+      capacityLeft:
         (typeof teacher.maxStudents === "number" ? teacher.maxStudents : 0) -
         (Array.isArray(teacher.assignedStudents)
           ? teacher.assignedStudents.length
@@ -58,17 +58,19 @@ const AssignSupervisor = () => {
       }));
   }, [projects]);
 
-  const filtered = studentProjects.filter((row) => {
-    const matchesSearch =
-      (row.studentName || "")
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      (row.title || "").toLowerCase().includes(searchTerm.toLowerCase());
+  const filtered = useMemo(() => {
+    return studentProjects.filter((row) => {
+      const matchesSearch =
+        (row.studentName || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        (row.title || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const status = row.supervisor ? "Assigned" : "Unassigned";
-    const matchesFilter = filterStatus === "all" || status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+      const status = row.supervisor ? "Assigned" : "Unassigned";
+      const matchesFilter = filterStatus === "all" || status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
+  }, [studentProjects, searchTerm, filterStatus]);
 
   const [pendingFor, setPendingFor] = useState(null);
 
@@ -85,30 +87,33 @@ const AssignSupervisor = () => {
       toast.error("Please select a supervisor first");
       return;
     }
-    if (projectStatus === "Rejected") {
+    if (projectStatus?.toLowerCase() === "rejected") {
       toast.error("Cannot assign supervisor to a rejected project");
       return;
     }
     setPendingFor(projectId);
-    const response = await dispatch(
-      assignSupervisor({ studentId, supervisorId }),
-    );
-    setPendingFor(null);
+    try {
+      const response = await dispatch(
+        assignSupervisor({ studentId, supervisorId }),
+      );
 
-    if (assignSupervisor.fulfilled.match(response)) {
-      toast.success("Supervisor assigned successfully");
-      setSelectedSupervisor((prev) => {
-        const newState = { ...prev };
-        delete newState[projectId];
-        return newState;
-      });
-      dispatch(getAllUsers());
-    } else {
-      const errorMessage =
-        response.payload?.message || "Failed to assign supervisor";
-      toast.error(errorMessage || "Failed to assign supervisor", {
-        autoClose: 5000,
-      });
+      if (assignSupervisor.fulfilled.match(response)) {
+        toast.success("Supervisor assigned successfully");
+        setSelectedSupervisor((prev) => {
+          const newState = { ...prev };
+          delete newState[projectId];
+          return newState;
+        });
+        dispatch(getAllUsers());
+      } else {
+        const errorMessage =
+          response.payload?.message || "Failed to assign supervisor";
+        toast.error(errorMessage || "Failed to assign supervisor", {
+          autoClose: 5000,
+        });
+      }
+    } finally {
+      setPendingFor(null);
     }
   };
 
@@ -258,7 +263,7 @@ const AssignSupervisor = () => {
                         <Badge
                           color="bg-red-100 text-red-800"
                           children={
-                            row.status === "Rejected"
+                            row.status?.toLowerCase() === "rejected"
                               ? "Rejected"
                               : "Not Assigned"
                           }
@@ -273,7 +278,7 @@ const AssignSupervisor = () => {
                         value={selectedSupervisor[row.projectId] || ""}
                         disabled={
                           !!row.supervisor ||
-                          row.status === "Rejected" ||
+                          row.status?.toLowerCase() === "rejected" ||
                           !row.isApproved
                         }
                         onChange={(e) =>
@@ -302,7 +307,7 @@ const AssignSupervisor = () => {
                         disabled={
                           pendingFor === row.projectId ||
                           !!row.supervisor ||
-                          row.status === "rejected" ||
+                          row.status?.toLowerCase() === "rejected" ||
                           !row.isApproved ||
                           !selectedSupervisor[row.projectId]
                         }
@@ -311,7 +316,7 @@ const AssignSupervisor = () => {
                           ? "Assigning..."
                           : row.supervisor
                             ? "Assigned"
-                            : row.status === "Rejected"
+                            : row.status?.toLowerCase() === "rejected"
                               ? "Rejected"
                               : !row.isApproved
                                 ? "Not Approved"
