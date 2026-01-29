@@ -87,8 +87,8 @@ const AssignedStudents = () => {
 
         case "lastActivity":
           return (
-            new Date(studentB.project?.updatedAt) -
-            new Date(studentA.project?.updatedAt)
+            (new Date(studentB.project?.updatedAt).getTime() || 0) -
+            (new Date(studentA.project?.updatedAt).getTime() || 0)
           );
 
         default:
@@ -213,7 +213,7 @@ const AssignedStudents = () => {
               {/*  */}
               <div className="mb-5">
                 <h4 className="font-medium text-slate-700 mb-1">
-                  {student.project.title || "No project title"}
+                  {student.project?.title || "No project title"}
                 </h4>
                 <p className="text-xs text-slate-500">
                   Last Update:{" "}
@@ -452,7 +452,17 @@ const AssignedStudents = () => {
                   <button onClick={closeModal} className="btn-danger">
                     Cancel
                   </button>
-                  <button className="btn-primary" onClick={markProjectComplete}>
+                  <button
+                    className="btn-primary"
+                    onClick={() => {
+                      if (selectedStudent?.project?._id) {
+                        dispatch(
+                          markProjectComplete(selectedStudent.project._id),
+                        );
+                        closeModal();
+                      }
+                    }}
+                  >
                     Mark as Completed
                   </button>
                 </div>

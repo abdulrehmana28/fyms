@@ -1,3 +1,12 @@
+const escapeHtml = (unsafe) => {
+  return (unsafe || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
 const generateForgotPasswordEmailTemplate = (resetPasswordUrl) => {
   return `
 <!DOCTYPE html>
@@ -27,6 +36,7 @@ const generateForgotPasswordEmailTemplate = (resetPasswordUrl) => {
 };
 
 const generateRequestAcceptanceTemplate = (teacherName) => {
+  const safeTeacherName = escapeHtml(teacherName);
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -43,7 +53,7 @@ const generateRequestAcceptanceTemplate = (teacherName) => {
     <div class="container">
         <h1>Request Accepted</h1>
         <p>Hello,</p>
-        <p>Your request has been accepted by ${teacherName}.</p>
+        <p>Your request has been accepted by ${safeTeacherName}.</p>
         <p>Best regards,<br>CapTrak Team</p>
     </div>
 </body>

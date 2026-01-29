@@ -15,7 +15,7 @@ const getTeacherDashboardStats = createAsyncThunk(
         error.response?.data?.message || "Failed to fetch dashboard stats.",
       );
       return thunkAPI.rejectWithValue(
-        error.response?.data.message || "Network Error",
+        error.response?.data?.message || "Network Error",
       );
     }
   },
@@ -99,7 +99,7 @@ const markProjectComplete = createAsyncThunk(
 );
 // Thunk to add feedback to a project
 const addFeedback = createAsyncThunk(
-  "addFeedback",
+  "teacher/addFeedback",
   async ({ projectId, payload }, thunkAPI) => {
     try {
       const res = await axiosInstance.post(
@@ -112,23 +112,27 @@ const addFeedback = createAsyncThunk(
         feedback: res.data.data?.feedback || res.data.data || res.data,
       };
     } catch (error) {
-      toast.error(error.response.data.message || "Failed to post feedback");
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      toast.error(error?.response?.data?.message || "Failed to post feedback");
+      return thunkAPI.rejectWithValue(
+        error?.response?.data?.message || "Failed to post feedback",
+      );
     }
   },
 );
 // Thunk to get assigned students
 const getAssignedStudents = createAsyncThunk(
-  "getAssignedStudents",
+  "teacher/getAssignedStudents",
   async (_, thunkAPI) => {
     try {
       const res = await axiosInstance.get(`/teacher/assigned-students`);
       return res.data.data?.students || res.data.data || res.data;
     } catch (error) {
       toast.error(
-        error.response.data.message || "Failed to fetch assigned students",
+        error.response?.data?.message || "Failed to fetch assigned students",
       );
-      return thunkAPI.rejectWithValue(error.response.data.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch assigned students",
+      );
     }
   },
 );
@@ -163,7 +167,7 @@ const getStudentProjectFiles = createAsyncThunk(
       return response.data.data?.files || response.data.data || response.data;
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to download project file.",
+        error.response?.data?.message || "Failed to get project files.",
       );
       return thunkAPI.rejectWithValue(
         error.response?.data.message || "Network Error",
@@ -203,21 +207,20 @@ const teacherSlice = createSlice({
       state.assignedStudents = state.assignedStudents.map((student) =>
         student.projectId === projectId ? { ...student, feedback } : student,
       );
-    });
-
-    builder.addCase(markProjectComplete.fulfilled, (state, action) => {
-      const { projectId } = action.payload;
-      state.assignedStudents = state.assignedStudents.map((student) => {
-        if (student.project._id === projectId) {
-          return {
-            ...student,
-            project: {
-              ...student.project,
-              status: "completed",
-            },
-          };
-        }
-        return student;
+      builder.addCase(markProjectComplete.fulfilled, (state, action) => {
+        const { projectId } = action.payload;
+        state.assignedStudents = state.assignedStudents.map((student) => {
+          if (student.project?._id === projectId) {
+            return {
+              ...student,
+              project: {
+                ...student.project,
+                status: "completed",
+              },
+            };
+          }
+          return student;
+        });
       });
     });
 

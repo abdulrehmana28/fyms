@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import {
   acceptRequest,
   rejectRequest,
@@ -16,6 +17,7 @@ const PendingRequests = () => {
   const { authUser } = useSelector((state) => state.auth);
 
   useEffect(() => {
+    if (!authUser?._id) return;
     dispatch(getTeacherRequests(authUser._id));
   }, [dispatch, authUser._id]);
 
@@ -31,7 +33,9 @@ const PendingRequests = () => {
     setLoading(requestId, "accepting", true);
 
     try {
-      await dispatch(acceptRequest({ requestId })).unwrap();
+      await dispatch(acceptRequest(requestId)).unwrap();
+    } catch (error) {
+      toast.error(error || "Failed to accept request");
     } finally {
       setLoading(requestId, "accepting", false);
     }
@@ -42,7 +46,9 @@ const PendingRequests = () => {
     setLoading(requestId, "rejecting", true);
 
     try {
-      await dispatch(rejectRequest({ requestId })).unwrap();
+      await dispatch(rejectRequest(requestId)).unwrap();
+    } catch (error) {
+      toast.error(error || "Failed to reject request");
     } finally {
       setLoading(requestId, "rejecting", false);
     }
@@ -98,7 +104,6 @@ const PendingRequests = () => {
                 <option value="pending">Pending</option>
                 <option value="accepted">Accepted</option>
                 <option value="rejected">Rejected</option>
-                <option value="all">All Departments</option>
               </select>
             </div>
           </div>
@@ -149,8 +154,10 @@ const PendingRequests = () => {
                               : "badge-rejected"
                         }`}
                       >
-                        {req.status?.charAt(0).toUpperCase() +
-                          req.status?.slice(1)}
+                        {req.status
+                          ? req.status.charAt(0).toUpperCase() +
+                            req.status.slice(1)
+                          : "Unknown"}
                       </span>
                     </div>
                     <p className="text-sm text-slate-600 mb-2">

@@ -50,28 +50,44 @@ const getTeacherDashboardStats = asyncHandler(async (req, res, next) => {
 });
 
 const getRequests = asyncHandler(async (req, res, next) => {
-  const { supervisor } = req.query;
+  const teacherId = req.user._id;
 
-  const filters = {};
-  if (supervisor) filters.supervisor = supervisor;
+  const filters = { supervisor: teacherId };
 
   const { requests, total } = await requestService.getAllRequests(filters);
 
-  const updatedRequests = await Promise.all(
-    requests.map(async (reqObj) => {
-      const requestObj = reqObj.toObject ? reqObj.toObject() : reqObj;
-      if (requestObj?.student?._id) {
-        const latestProject = await Project.findOne({
-          student: requestObj.student._id,
-        })
-          .sort({ createdAt: -1 })
-          .lean();
+  const studentIds = requests
+    .map((r) => r.student?._id)
+    .filter((id) => id !== undefined && id !== null);
 
-        return { ...requestObj, latestProject };
-      }
-      return requestObj;
-    }),
-  );
+  let latestProjectsMap = {};
+
+  if (studentIds.length > 0) {
+    const projects = await Project.aggregate([
+      { $match: { student: { $in: studentIds } } },
+      { $sort: { createdAt: -1 } },
+      {
+        $group: {
+          _id: "$student",
+          latestProject: { $first: "$$ROOT" },
+        },
+      },
+    ]);
+
+    projects.forEach((p) => {
+      latestProjectsMap[p._id.toString()] = p.latestProject;
+    });
+  }
+
+  const updatedRequests = requests.map((reqObj) => {
+    const requestObj = reqObj.toObject ? reqObj.toObject() : reqObj;
+    if (requestObj?.student?._id) {
+      const latestProject =
+        latestProjectsMap[requestObj.student._id.toString()] || null;
+      return { ...requestObj, latestProject };
+    }
+    return requestObj;
+  });
 
   res.status(200).json({
     success: true,
@@ -138,6 +154,9 @@ const rejectRequest = asyncHandler(async (req, res, next) => {
   );
 
   const student = await User.findById(request.student._id);
+  if (!student) {
+    return next(new ErrorHandler("Student not found", 404));
+  }
   const studentEmail = student.email;
   const message = generateRequestRejectionTemplate(req.user.name);
 
@@ -146,7 +165,6 @@ const rejectRequest = asyncHandler(async (req, res, next) => {
     subject: "CapTrak - Request Rejected",
     message,
   });
-
   res.status(200).json({
     success: true,
     message: "Request rejected successfully",
@@ -277,10 +295,7 @@ const downloadStudentProjectFiles = asyncHandler(async (req, res, next) => {
   const supervisorId = req.user._id;
   const project = await projectService.getProjectById(projectId);
 
-  if (
-    !project ||
-    project.supervisor._id.toString() !== supervisorId.toString()
-  ) {
+  if (!project || project.supervisor.toString() !== supervisorId.toString()) {
     return next(
       new ErrorHandler(
         "Project not found or you do not have permission to download files from this project",
@@ -288,7 +303,6 @@ const downloadStudentProjectFiles = asyncHandler(async (req, res, next) => {
       ),
     );
   }
-
   const file = project.files.id(fileId);
   if (!file) {
     return next(new ErrorHandler("File not found", 404));

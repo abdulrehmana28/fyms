@@ -29,24 +29,23 @@ const getAllRequests = async (filters = {}) => {
 };
 
 const acceptRequestById = async (requestId, supervisorId) => {
-  const request = await SupervisorRequest.findById(requestId)
+  const request = await SupervisorRequest.findOneAndUpdate(
+    {
+      _id: requestId,
+      supervisor: supervisorId,
+      status: "Pending",
+    },
+    { status: "Accepted" },
+    { new: true },
+  )
     .populate("student", "name email supervisor project")
     .populate("supervisor", "name email assignedStudents maxStudents");
 
   if (!request) {
-    throw new Error("Request not found or already processed");
+    throw new Error(
+      "Request not found, you are not authorized, or it has already been processed",
+    );
   }
-
-  if (request.supervisor._id.toString() !== supervisorId.toString()) {
-    throw new Error("You are not authorized to accept this request");
-  }
-
-  if (request.status !== "Pending") {
-    throw new Error("Request has already been processed");
-  }
-
-  request.status = "Accepted";
-  await request.save();
 
   return request;
 };

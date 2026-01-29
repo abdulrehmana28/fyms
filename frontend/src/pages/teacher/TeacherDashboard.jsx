@@ -7,7 +7,7 @@ const TeacherDashboard = () => {
   const dispatch = useDispatch();
 
   const { dashboardStats, loading } = useSelector((state) => state.teacher);
-  const { authUser } = useSelector((state) => state.auth);
+  const { authUser, isCheckingAuth } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(getTeacherDashboardStats());
@@ -19,7 +19,7 @@ const TeacherDashboard = () => {
     {
       title: "Assigned Students",
       value: authUser?.assignedStudents?.length || 0,
-      loading,
+      loading: isCheckingAuth,
       Icon: Users,
       bg: "bg-blue-100",
       color: "text-blue-600",

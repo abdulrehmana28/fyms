@@ -23,8 +23,8 @@ const getProjectById = async (projectId) => {
   return project;
 };
 
-const getAllProjects = async () => {
-  const projects = await Project.find()
+const getAllProjects = async (filter = {}) => {
+  const projects = await Project.find(filter)
     .populate("student", "name email")
     .populate("supervisor", "name email")
     .sort({ createdAt: -1 });

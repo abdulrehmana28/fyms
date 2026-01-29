@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   ArrowDownToLine,
+  File,
   FileArchive,
   FileSpreadsheet,
   FileText,
@@ -73,6 +74,7 @@ const TeacherFiles = () => {
       student: file.studentName,
       projectId: file.projectId || file.project?._id,
       uploadDate: file.uploadedAt || file.createdAt || new Date().toISOString(),
+      size: file.size || file.fileSize || 0,
     };
   };
 
@@ -115,12 +117,19 @@ const TeacherFiles = () => {
   });
 
   const handleDownloadFile = async (file) => {
-    const response = await dispatch(
-      downloadStudentProjectFiles({
-        projectId: file.projectId,
-        fileId: file.fileId,
-      }),
-    ).then((res) => {
+    try {
+      const res = await dispatch(
+        downloadStudentProjectFiles({
+          projectId: file.projectId,
+          fileId: file.fileId,
+        }),
+      );
+
+      if (res.error || !res.payload || !res.payload.blob) {
+        console.error("Failed to download file:", res.error);
+        return;
+      }
+
       const { blob } = res.payload;
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement("a");
@@ -130,7 +139,9 @@ const TeacherFiles = () => {
       link.click();
       link.parentNode.removeChild(link);
       window.URL.revokeObjectURL(url);
-    });
+    } catch (error) {
+      console.error("Error in file download:", error);
+    }
   };
   // ----------------
 
@@ -265,7 +276,7 @@ const TeacherFiles = () => {
         {viewMode === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {filteredFiles.map((file) => (
-              <div key={file.id} className="card">
+              <div key={file.fileId} className="card">
                 <div className="flex flex-col items-center text-center">
                   <div className="mb-3">{getFileIcon(file.type)}</div>
                   <h3
@@ -299,7 +310,9 @@ const TeacherFiles = () => {
                 <tr>
                   {tableHeadData.map((t) => {
                     return (
-                      <th className="py-3 px-4 text-left font-semibold">{t}</th>
+                      <th key={t} className="py-3 px-4 text-left font-semibold">
+                        {t}
+                      </th>
                     );
                   })}
                 </tr>
@@ -309,7 +322,7 @@ const TeacherFiles = () => {
                 {filteredFiles.map((file) => {
                   return (
                     <tr
-                      key={file.id}
+                      key={file.fileId}
                       className="border-t hover:bg-slate-50 transition-colors"
                     >
                       <td className="py-3 px-4 items-center gap-3">
