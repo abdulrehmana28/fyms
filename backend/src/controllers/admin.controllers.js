@@ -257,7 +257,6 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
   //
 });
 
-const assignProjectToStudent = asyncHandler(async (req, res, next) => {});
 
 const getAllDashboardStats = asyncHandler(async (req, res, next) => {
   const [
