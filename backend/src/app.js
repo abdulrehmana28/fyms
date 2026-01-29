@@ -46,6 +46,7 @@ import studentRoutes from "./routes/student.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import projectRoutes from "./routes/project.routes.js";
 import deadlineRoutes from "./routes/deadline.routes.js";
+import teacherRoutes from "./routes/teacher.routes.js";
 // routes usage
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
@@ -53,6 +54,7 @@ app.use("/api/v1/student", studentRoutes);
 app.use("/api/v1/notification", notificationRoutes);
 app.use("/api/v1/project", projectRoutes);
 app.use("/api/v1/deadline", deadlineRoutes);
+app.use("/api/v1/teacher", teacherRoutes);
 // **********************
 // Error Middleware must be the last middleware
 app.use(errorMiddleware);

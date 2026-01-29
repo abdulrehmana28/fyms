@@ -57,10 +57,53 @@ const addFilesToProject = async (projectId, files) => {
   return project;
 };
 
+const markComplete = async (projectId) => {
+  const project = await Project.findByIdAndUpdate(
+    projectId,
+    { status: "Completed" },
+    { new: true, runValidators: true },
+  )
+    .populate("student", "name email")
+    .populate("supervisor", "name email");
+
+  if (!project) {
+    throw new ErrorHandler("Project not found", 404);
+  }
+
+  return project;
+};
+
+const addFeedback = async (projectId, supervisorId, type, title, message) => {
+  const project = await Project.findById(projectId);
+
+  if (!project) {
+    throw new ErrorHandler("Project not found", 404);
+  }
+
+  project.feedback.push({
+    supervisorId,
+    type,
+    title,
+    message,
+  });
+
+  await project.save();
+
+  const latestFeedback = project.feedback[project.feedback.length - 1];
+  return { project, latestFeedback };
+};
+
+const getProjectsBySupervisorId = async (supervisorId) => {
+  return await getAllProjects({ supervisor: supervisorId });
+};
+
 export {
   getProjectsByStudentId,
   createProject,
   getProjectById,
   addFilesToProject,
   getAllProjects,
+  markComplete,
+  addFeedback,
+  getProjectsBySupervisorId,
 };

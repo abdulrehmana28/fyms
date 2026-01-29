@@ -37,6 +37,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getUser } from "./store/slices/authSlice";
 import { Loader } from "lucide-react";
 import { getAllProjects, getAllUsers } from "./store/slices/adminSlice";
+import { fetchDashboardStats } from "./store/slices/studentSlice";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const authUser = useSelector((state) => state.auth.authUser);
@@ -62,9 +63,8 @@ const App = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (authUser?.role === "Admin") {
-      dispatch(getAllUsers());
-      dispatch(getAllProjects());
+    if (authUser?.role === "Student") {
+      dispatch(fetchDashboardStats());
     }
   }, [authUser]);
 
@@ -152,7 +152,7 @@ const App = () => {
             }
           >
             <Route index element={<TeacherDashboard />} />
-            <Route path="requests" element={<PendingRequests />} />
+            <Route path="pending-requests" element={<PendingRequests />} />
             <Route path="assigned-students" element={<AssignedStudents />} />
             <Route path="files" element={<TeacherFiles />} />
           </Route>

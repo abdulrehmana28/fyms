@@ -16,7 +16,8 @@ const StudentDashboard = () => {
   const project = dashboardStats?.project || {};
   const supervisorName = dashboardStats?.supervisorName || "N/A";
   const upcomingDeadlines = dashboardStats?.upcomingDeadlines || [];
-  const feedbackList = dashboardStats?.feedbackList?.slice(-2).reverse() || [];
+  const feedbackList =
+    dashboardStats?.feedbackNotifications?.slice(-2).reverse() || [];
   const topNotifications = dashboardStats?.topNotifications || [];
 
   const formateDate = (dateString) => {
