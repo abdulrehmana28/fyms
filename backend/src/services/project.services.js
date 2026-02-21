@@ -80,6 +80,29 @@ const addFeedback = async (projectId, supervisorId, type, title, message) => {
     throw new ErrorHandler("Project not found", 404);
   }
 
+  // Healing/Migration Logic: Ensure all existing feedback follows the new flat schema
+  // Old format had { feedback: [...] }, new schema is flat
+  project.feedback = project.feedback.map((f) => {
+    // If it's an old-format entry (has inner feedback array)
+    if (f.feedback && Array.isArray(f.feedback) && f.feedback.length > 0) {
+      // Return the first valid inner feedback flattened
+      const inner = f.feedback[0];
+      return {
+        supervisorId: inner.supervisorId,
+        type: inner.type,
+        title: inner.title,
+        message: inner.message,
+        createdAt: f.createdAt,
+      };
+    }
+    return f;
+  });
+
+  // Filter out any entries that are still missing required fields after healing
+  project.feedback = project.feedback.filter(
+    (f) => f.supervisorId && f.title && f.message,
+  );
+
   project.feedback.push({
     supervisorId,
     type,

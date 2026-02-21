@@ -202,7 +202,7 @@ const markProjectAsCompleted = asyncHandler(async (req, res, next) => {
     return next(new ErrorHandler("Project not found", 404));
   }
 
-  if (project.supervisor.toString() !== teacherId.toString()) {
+  if (project.supervisor._id.toString() !== teacherId.toString()) {
     return next(
       new ErrorHandler("You are not authorized to complete this project", 403),
     );
@@ -213,7 +213,7 @@ const markProjectAsCompleted = asyncHandler(async (req, res, next) => {
   await notificationService.notifyUser(
     project.student._id,
     `Your project "${project.title}" has been marked as completed by ${req.user.name}.`,
-    "Comment",
+    "Success",
     "/students/status",
     "Low",
   );
@@ -236,7 +236,7 @@ const addFeedbackToProject = asyncHandler(async (req, res, next) => {
     return next(new ErrorHandler("Project not found", 404));
   }
 
-  if (project.supervisor.toString() !== teacherId.toString()) {
+  if (project.supervisor._id.toString() !== teacherId.toString()) {
     return next(
       new ErrorHandler(
         "You are not authorized to add feedback to this project",
@@ -252,17 +252,18 @@ const addFeedbackToProject = asyncHandler(async (req, res, next) => {
   }
 
   const { project: updatedProject, latestFeedback } =
-    await projectService.addFeedback(projectId, {
-      supervisorId: teacherId,
+    await projectService.addFeedback(
+      projectId,
+      teacherId,
       type,
       title,
       message,
-    });
+    );
 
   await notificationService.notifyUser(
     project.student._id,
     `Your project "${project.title}" has received new feedback from ${req.user.name}.`,
-    "Comment",
+    "Feedback",
     "/students/feedback",
     "Low",
   );
@@ -308,7 +309,7 @@ const downloadStudentProjectFiles = asyncHandler(async (req, res, next) => {
   const supervisorId = req.user._id;
   const project = await projectService.getProjectById(projectId);
 
-  if (!project || project.supervisor.toString() !== supervisorId.toString()) {
+  if (!project || project.supervisor._id.toString() !== supervisorId.toString()) {
     return next(
       new ErrorHandler(
         "Project not found or you do not have permission to download files from this project",
