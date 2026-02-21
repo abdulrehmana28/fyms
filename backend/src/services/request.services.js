@@ -13,10 +13,9 @@ const createRequest = async (requestData) => {
     );
   }
 
-  console.log("Creating request with data:", requestData);
   const newRequest = await SupervisorRequest.create(requestData);
-  console.log("Created request:", newRequest);
-  return await newRequest.save();
+
+  return newRequest;
 };
 
 const getAllRequests = async (filters = {}) => {
@@ -30,18 +29,16 @@ const getAllRequests = async (filters = {}) => {
   return { requests, total };
 };
 
+// Accepts a supervision request, assigns the supervisor to the student, and
+// updates the student's latest project. Returns both the updated request and
+// the modified project (if any) so callers can react accordingly.
 const acceptRequestById = async (requestId, supervisorId) => {
-  const request = await SupervisorRequest.findOneAndUpdate(
-    {
-      _id: requestId,
-      supervisor: supervisorId,
-      status: "Pending",
-    },
-    { status: "Approved" },
-    { new: true },
-  )
-    .populate("student", "name email supervisor project")
-    .populate("supervisor", "name email assignedStudents maxStudents");
+  // locate the pending request first (we'll mutate it later)
+  const request = await SupervisorRequest.findOne({
+    _id: requestId,
+    supervisor: supervisorId,
+    status: "Pending",
+  });
 
   if (!request) {
     throw new Error(
@@ -49,7 +46,35 @@ const acceptRequestById = async (requestId, supervisorId) => {
     );
   }
 
-  return request;
+  const studentId = request.student;
+
+  // assign supervisor on user record; may throw if capacity exhausted or
+  // invalid IDs
+  const userService = await import("./user.services.js");
+  const projectService = await import("./project.services.js");
+  await userService.assignSupervisorDirectly(studentId, supervisorId);
+
+  // update latest project if exists
+  let updatedProject = null;
+  const project = await projectService.getProjectsByStudentId(studentId);
+  if (project) {
+    project.supervisor = supervisorId;
+    project.status = "Approved";
+    updatedProject = await project.save();
+  }
+
+  // mark approved
+  request.status = "Approved";
+  await request.save();
+
+  // populate separately (avoid chaining on promise)
+  await request.populate("student", "name email supervisor project");
+  await request.populate(
+    "supervisor",
+    "name email assignedStudents maxStudents",
+  );
+
+  return { request, project: updatedProject };
 };
 
 const rejectRequestById = async (requestId, supervisorId) => {

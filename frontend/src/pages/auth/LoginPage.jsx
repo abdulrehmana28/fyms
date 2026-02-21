@@ -94,7 +94,7 @@ const LoginPage = () => {
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500 rounded-full mb-4">
               {/* TODO: Add custom icon or logo */}
-              <Rotate3D className="w-12 h-8 text-white" />
+              <Rotate3D className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-slate-800">
               CapTrak <br /> Final Year Project Management System

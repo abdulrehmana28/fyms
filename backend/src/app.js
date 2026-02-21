@@ -3,6 +3,7 @@ import cors from "cors";
 import { config } from "dotenv";
 import cookieParser from "cookie-parser";
 import { errorMiddleware } from "./middlewares/error.middleware.js";
+import { setFileSystemAvailable } from "./utils/fsAvailability.js";
 import { authMiddleware } from "./middlewares/auth.middleware.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -16,13 +17,19 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
+// build a list of allowed origins; drop any falsy entries and only
+// expose localhost when running outside of production. this prevents an
+// undefined entry from creeping into the array and keeps the prod config
+// locked down.
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  "https://captrak.vercel.app",
+  ...(process.env.NODE_ENV !== "production" ? ["http://localhost:5173"] : []),
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: [
-      process.env.FRONTEND_URL,
-      "https://captrak.vercel.app",
-      "http://localhost:5173",
-    ],
+    origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   }),
@@ -35,10 +42,16 @@ try {
   fs.mkdirSync(uploadDir, { recursive: true });
   fs.mkdirSync(tempDir, { recursive: true });
 } catch (error) {
-  console.log(
-    "Error creating directories (likely due to read-only filesystem on Vercel):",
+  // log the full message for debugging and flip the availability flag so
+  // request handlers can respond with a service‑unavailable status instead
+  console.error(
+    "Failed to create required filesystem directories:",
     error.message,
   );
+  setFileSystemAvailable(false);
+  // note: we intentionally do not exit the process so reads still work; if
+  // you prefer the server to crash immediately uncomment the next line.
+  // process.exit(1);
 }
 
 app.use(cookieParser());

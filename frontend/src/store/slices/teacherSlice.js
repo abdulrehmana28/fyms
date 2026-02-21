@@ -48,7 +48,9 @@ const acceptRequest = createAsyncThunk(
         `/teacher/requests/accept/${requestId}`,
       );
       toast.success(response.data.message || "Request accepted successfully.");
-      return response.data.data?.request || response.data.data;
+      // backend now returns { request, project } so we hand back the entire
+      // object rather than just the inner request
+      return response.data.data || response.data;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to accept request.");
       return thunkAPI.rejectWithValue(
@@ -233,7 +235,10 @@ const teacherSlice = createSlice({
     });
 
     builder.addCase(acceptRequest.fulfilled, (state, action) => {
-      const updatedRequest = action.payload;
+      // payload may be either the request object itself (old behaviour) or
+      // an object containing { request, project }, so normalise it here.
+      const payload = action.payload;
+      const updatedRequest = payload?.request || payload;
       state.list = state.list.map((request) =>
         request._id === updatedRequest._id ? updatedRequest : request,
       );

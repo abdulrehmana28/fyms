@@ -11,7 +11,11 @@ import { FileText } from "lucide-react";
 const PendingRequests = () => {
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  // show only pending items by default since this page is about pending requests
+  // teachers were reporting they never saw action buttons because the list often
+  // contained only approved/rejected entries. Defaulting to "pending" matches
+  // the page title and makes it obvious when there's work to do.
+  const [filterStatus, setFilterStatus] = useState("pending");
   const [loadingMap, setLoadingMap] = useState({});
   const { list } = useSelector((state) => state.teacher);
   const { authUser } = useSelector((state) => state.auth);
@@ -64,7 +68,10 @@ const PendingRequests = () => {
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
 
-      const reqStatus = (request?.status || "").toLowerCase();
+      // normalize and trim statuses in case the backend ever includes stray
+      // whitespace (users were reporting missing buttons which turned out to be
+      // a trailing space in the status string).
+      const reqStatus = (request?.status || "").toLowerCase().trim();
       const matchesStatus =
         filterStatus === "all" || reqStatus === filterStatus;
       return matchesSearch && matchesStatus;
@@ -79,6 +86,11 @@ const PendingRequests = () => {
             <h1 className="card-title">Pending Supervision Requests</h1>
             <p className="card-subtitle">
               Review and respond to student supervision requests
+            </p>
+            <p className="text-sm text-slate-600 mt-1">
+              Only requests with a <strong>Pending</strong> status can be
+              accepted or rejected; use the filter dropdown if you need to
+              review other statuses.
             </p>
           </div>
 
@@ -117,12 +129,21 @@ const PendingRequests = () => {
           {filteredRequests.map((req) => {
             const id = req._id;
             const project = req.latestProject;
-            const projectStatus = project?.status?.toLowerCase() || "pending";
+            const projectStatus = (project?.status || "pending")
+              .toLowerCase()
+              .trim();
             const supervisorAssigned = !!project?.supervisor;
 
-            // normalize request status for comparisons / display
-            const reqStatus = (req?.status || "").toLowerCase();
+            // normalize request status for comparisons / display (trim whitespace)
+            const reqStatus = (req?.status || "").toLowerCase().trim();
 
+            // teachers are allowed to accept a supervision request as long as the
+            // project hasn't been rejected and there isn't already a supervisor.
+            // accepting the request will also mark the project "approved" on the
+            // backend, so we intentionally allow both pending (pre‑approval) and
+            // approved projects here. If business rules change to require a prior
+            // admin approval, update this condition to
+            // `projectStatus === "approved" && !supervisorAssigned`.
             const canAccept =
               !supervisorAssigned && projectStatus !== "rejected";
 

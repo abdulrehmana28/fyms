@@ -100,11 +100,29 @@ const SupervisorPage = () => {
           {hasSupervisor ? (
             <div className="space-y-6">
               <div className="flex items-start space-x-6">
-                <img
-                  src="https://i.pravatar.cc/150?img=65"
-                  alt={`${supervisor.name.charAt(0)}`}
-                  className="w-20 h-20 rounded-full object-cover shadow-md"
-                />
+                {/**
+                 * Use a real avatar URL if provided; otherwise fall back to
+                 * a pravatar image keyed by the supervisor's _id (or name) so
+                 * different supervisors have distinct pictures. Compute a safe
+                 * initial for the alt attribute.
+                 */}
+                {(() => {
+                  const name = supervisor?.name || "";
+                  const initial = name.charAt(0) || "S";
+                  const src =
+                    supervisor?.avatarUrl ||
+                    supervisor?.avatar ||
+                    `https://i.pravatar.cc/150?u=${
+                      supervisor?._id || encodeURIComponent(name) || "anon"
+                    }`;
+                  return (
+                    <img
+                      src={src}
+                      alt={initial}
+                      className="w-20 h-20 rounded-full object-cover shadow-md"
+                    />
+                  );
+                })()}
                 <div className="flex-1 space-y-4">
                   <div>
                     <h3 className="text-2xl font-bold text-slate-800">
@@ -369,16 +387,12 @@ const SupervisorPage = () => {
                     setRequestMessage("");
                     setSelectedSupervisor(null);
                   }}
-                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                  className="btn-secondary"
                 >
                   Cancel
                 </button>
 
-                <button
-                  onClick={submitRequest}
-                  className="btn-primary"
-                  disabled={!requestMessage.trim()}
-                >
+                <button onClick={submitRequest} className="btn-primary">
                   Send Request
                 </button>
               </div>

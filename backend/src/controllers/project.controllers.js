@@ -1,10 +1,18 @@
 import * as projectService from "../services/project.services.js";
 import * as userService from "../services/user.services.js";
 import * as fileService from "../services/file.services.js";
+import { isFileSystemAvailable } from "../utils/fsAvailability.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ErrorHandler } from "../middlewares/error.middleware.js";
 
 const downloadProjectFiles = asyncHandler(async (req, res, next) => {
+  if (!isFileSystemAvailable()) {
+    return res.status(503).json({
+      success: false,
+      message: "File system unavailable. Cannot download files at this time.",
+    });
+  }
+
   const { projectId, fileId } = req.params;
   const user = req.user;
   const project = await projectService.getProjectById(projectId);

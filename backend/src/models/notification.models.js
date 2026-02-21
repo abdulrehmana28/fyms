@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { AvailableNotificationTypes, AvailableNotificationPriorities } from "../utils/constants.js";
 
 const notificationSchema = new mongoose.Schema(
   {
@@ -22,25 +23,13 @@ const notificationSchema = new mongoose.Schema(
       default: null,
     },
     type: {
-      //TODO: add enum from utils/constants.js
       type: String,
-      enum: [
-        "Info",
-        "Warning",
-        "Alert",
-        "Success",
-        "Request",
-        "Feedback",
-        "Deadline",
-        "Meeting",
-        "System",
-      ],
+      enum: AvailableNotificationTypes,
       default: "Info",
     },
     priority: {
       type: String,
-      //TODO: add enum from utils/constants.js
-      enum: ["Low", "Medium", "High"],
+      enum: AvailableNotificationPriorities,
       default: "Low",
     },
   },

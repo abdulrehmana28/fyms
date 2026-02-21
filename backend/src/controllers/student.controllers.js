@@ -72,7 +72,17 @@ const submitProposal = asyncHandler(async (req, res, next) => {
   });
 });
 
+import { isFileSystemAvailable } from "../utils/fsAvailability.js";
+
 const uploadProjectFiles = asyncHandler(async (req, res, next) => {
+  // fail early if the filesystem isn’t writable; avoids confusing multer errors
+  if (!isFileSystemAvailable()) {
+    return res.status(503).json({
+      success: false,
+      message: "File system unavailable. Uploads are temporarily disabled.",
+    });
+  }
+
   const { projectId } = req.params;
   const studentId = req.user._id;
   const project = await projectService.getProjectById(projectId);
@@ -268,6 +278,13 @@ const getFeedback = asyncHandler(async (req, res, next) => {
 });
 
 const downloadProjectFiles = asyncHandler(async (req, res, next) => {
+  if (!isFileSystemAvailable()) {
+    return res.status(503).json({
+      success: false,
+      message: "File system unavailable. Cannot download files at this time.",
+    });
+  }
+
   const { projectId, fileId } = req.params;
   const studentId = req.user._id;
   const project = await projectService.getProjectById(projectId);

@@ -11,6 +11,7 @@ import * as projectService from "../services/project.services.js";
 import * as requestService from "../services/request.services.js";
 import * as notificationService from "../services/notification.services.js";
 import * as fileService from "../services/file.services.js";
+import { isFileSystemAvailable } from "../utils/fsAvailability.js";
 import { Project } from "../models/project.models.js";
 import { Notification } from "../models/notification.models.js";
 import { SupervisorRequest } from "../models/supervisorRequest.models.js";
@@ -100,18 +101,23 @@ const acceptRequest = asyncHandler(async (req, res, next) => {
   const { requestId } = req.params;
   const teacherId = req.user._id;
 
-  const request = await requestService.acceptRequestById(requestId, teacherId);
+  // our updated service now returns both the request object and the
+  // newly-updated project (if any). callers can ignore the project when not
+  // needed.
+  const result = await requestService.acceptRequestById(requestId, teacherId);
 
-  if (!request) {
+  if (!result || !result.request) {
     return next(
       new ErrorHandler("Request not found or already processed", 404),
     );
   }
 
+  const { request, project } = result;
+
   await notificationService.notifyUser(
     request.student._id,
     `Your request has been accepted by ${req.user.name}.`,
-    "Approval",
+    "Success",
     "/students/status",
     "High",
   );
@@ -129,7 +135,7 @@ const acceptRequest = asyncHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Request accepted successfully",
-    data: { request },
+    data: { request, project },
   });
 });
 
@@ -148,7 +154,7 @@ const rejectRequest = asyncHandler(async (req, res, next) => {
   await notificationService.notifyUser(
     request.student._id,
     `Your request has been rejected by ${req.user.name}.`,
-    "Rejection",
+    "Alert",
     "/students/status",
     "High",
   );
@@ -291,6 +297,13 @@ const getStudentProjectFiles = asyncHandler(async (req, res, next) => {
 });
 
 const downloadStudentProjectFiles = asyncHandler(async (req, res, next) => {
+  if (!isFileSystemAvailable()) {
+    return res.status(503).json({
+      success: false,
+      message: "File system unavailable. Cannot download files at this time.",
+    });
+  }
+
   const { projectId, fileId } = req.params;
   const supervisorId = req.user._id;
   const project = await projectService.getProjectById(projectId);
