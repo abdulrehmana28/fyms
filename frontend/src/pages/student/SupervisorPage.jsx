@@ -76,7 +76,7 @@ const SupervisorPage = () => {
         teacherId: selectedSupervisor._id,
         message,
       }),
-    ).then((response) => { 
+    ).then((response) => {
       if (response.type === "student/requestSupervisor/fulfilled") {
         setShowRequestModal(false);
         // setSelectedSupervisor(null);
@@ -101,8 +101,8 @@ const SupervisorPage = () => {
             <div className="space-y-6">
               <div className="flex items-start space-x-6">
                 <img
-                  src="/placeholder.jpg"
-                  alt="supervisor avatar"
+                  src="https://i.pravatar.cc/150?img=65"
+                  alt={`${supervisor.name.charAt(0)}`}
                   className="w-20 h-20 rounded-full object-cover shadow-md"
                 />
                 <div className="flex-1 space-y-4">
@@ -262,7 +262,9 @@ const SupervisorPage = () => {
                       <div className="w-12 h-12 bg-slate-300 rounded-full flex items-center justify-center">
                         <span className="text-slate-600 font-semibold text-lg">
                           {" "}
-                          {supervisor.name || "N/A"}{" "}
+                          {supervisor.name
+                            ? supervisor.name.charAt(0)
+                            : "N/A"}{" "}
                         </span>
                       </div>
 
@@ -359,27 +361,27 @@ const SupervisorPage = () => {
                 rows={4}
                 required
               />
-            </div>
 
-            <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
-              <button
-                onClick={() => {
-                  setShowRequestModal(false);
-                  setRequestMessage("");
-                  setSelectedSupervisor(null);
-                }}
-                className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
+              <div className="flex justify-end space-x-3 pt-4 border-t border-slate-200">
+                <button
+                  onClick={() => {
+                    setShowRequestModal(false);
+                    setRequestMessage("");
+                    setSelectedSupervisor(null);
+                  }}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
 
-              <button
-                onClick={submitRequest}
-                className="btn-primary"
-                disabled={!requestMessage.trim()}
-              >
-                Send Request
-              </button>
+                <button
+                  onClick={submitRequest}
+                  className="btn-primary"
+                  disabled={!requestMessage.trim()}
+                >
+                  Send Request
+                </button>
+              </div>
             </div>
           </div>
         </div>

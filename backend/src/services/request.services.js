@@ -13,7 +13,9 @@ const createRequest = async (requestData) => {
     );
   }
 
+  console.log("Creating request with data:", requestData);
   const newRequest = await SupervisorRequest.create(requestData);
+  console.log("Created request:", newRequest);
   return await newRequest.save();
 };
 
@@ -35,7 +37,7 @@ const acceptRequestById = async (requestId, supervisorId) => {
       supervisor: supervisorId,
       status: "Pending",
     },
-    { status: "Accepted" },
+    { status: "Approved" },
     { new: true },
   )
     .populate("student", "name email supervisor project")

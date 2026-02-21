@@ -95,7 +95,9 @@ const requestSupervisor = createAsyncThunk(
       );
       thunkAPI.dispatch(getSupervisor());
       toast.success("Supervisor requested successfully!");
-      return response.data.data?.request || response.data.data || response.data;
+      return (
+        response.data?.data?.request || response.data?.data || response?.data
+      );
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to request supervisor.",

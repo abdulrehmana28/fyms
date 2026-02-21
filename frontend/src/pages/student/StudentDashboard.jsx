@@ -45,7 +45,7 @@ const StudentDashboard = () => {
   return (
     <>
       <div className="space-y-6">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 text-white">
+        <div className="bg-gradient-to-r from-green-800 to-green-600 rounded-lg p-6 text-white">
           <h1 className="text-2xl font-semibold mb-2">
             Welcome back, {authUser?.name || "Student"}
           </h1>
@@ -142,10 +142,10 @@ const StudentDashboard = () => {
             {/*  */}
             <div className="flex items-center gap-2">
               <label className="text-sm font-medium text-slate-600">
-                status
+                status:
               </label>
               <span
-                className={`inline-flex items-center px-2 py-[2px] rounded-full text-sm font-medium capitalize ${project?.status === "approved" ? "bg-green-100 text-green-800" : project?.status === "pending" ? "bg-yellow-100 text-yellow-800" : project?.status === "rejected" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"}`}
+                className={`inline-flex items-center px-2 py-[2px] rounded-full text-sm font-medium capitalize ${project?.status === "Approved" ? "bg-green-100 text-green-800" : project?.status === "Pending" ? "bg-yellow-100 text-yellow-800" : project?.status === "Rejected" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"}`}
               >
                 {project.status || "No Status"}
               </span>

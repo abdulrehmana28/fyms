@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../../store/slices/authSlice";
-import { Banana } from "lucide-react";
+import { Rotate3D } from "lucide-react";
 import { toast } from "react-toastify";
 
 const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -17,7 +17,7 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
     try {
       await dispatch(logout()).unwrap();
     } catch (error) {
-      toast.error("Logout failed",);
+      toast.error("Logout failed");
     } finally {
       navigate("/login");
     }
@@ -85,9 +85,9 @@ const Navbar = ({ sidebarOpen, setSidebarOpen }) => {
                       d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
                     />
                   </svg> */}
-                  <Banana className="w-5 h-5 text-white" />
+                  <Rotate3D className="w-5 h-5 text-white" />
                 </div>
-                <div className="ml-3 hidden sm:block">
+                <div className="ml-3 block">
                   <h1 className="text-lg font-semibold text-slate-800">
                     CapTrak{" "}
                     <span className="text-sm text-white font-semibold border-2 border-pink-600 bg-pink-500 rounded px-1">

@@ -18,8 +18,12 @@ const app = express();
 
 app.use(
   cors({
-    origin: [process.env.FRONTEND_URL],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: [
+      process.env.FRONTEND_URL,
+      "https://captrak.vercel.app",
+      "http://localhost:5173",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
   }),
 );
@@ -27,12 +31,14 @@ app.use(
 const uploadDir = path.join(__dirname, "../uploads");
 const tempDir = path.join(__dirname, "../temp");
 
-if (!fs.existsSync(uploadDir, { recursive: true })) {
-  fs.mkdirSync(uploadDir);
-}
-
-if (!fs.existsSync(tempDir, { recursive: true })) {
-  fs.mkdirSync(tempDir);
+try {
+  fs.mkdirSync(uploadDir, { recursive: true });
+  fs.mkdirSync(tempDir, { recursive: true });
+} catch (error) {
+  console.log(
+    "Error creating directories (likely due to read-only filesystem on Vercel):",
+    error.message,
+  );
 }
 
 app.use(cookieParser());

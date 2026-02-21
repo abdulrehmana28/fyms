@@ -38,6 +38,7 @@ import { getUser } from "./store/slices/authSlice";
 import { Loader } from "lucide-react";
 import { getAllProjects, getAllUsers } from "./store/slices/adminSlice";
 import { fetchDashboardStats } from "./store/slices/studentSlice";
+import { Analytics } from "@vercel/analytics/react";
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const authUser = useSelector((state) => state.auth.authUser);

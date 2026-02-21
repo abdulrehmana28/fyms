@@ -243,7 +243,7 @@ const AdminDashboard = () => {
     <>
       <div className="space-y-6">
         {/* Header */}
-        <div className="bg-gradient-to-r from-blue-500 to-green-600 rounded-lg p-6 text-white">
+        <div className="bg-gradient-to-r from-green-800 to-green-600 rounded-lg p-6 text-white">
           <h1 className="text-2xl font-semibold mb-2">
             Welcome back, Admin Dashboard
           </h1>

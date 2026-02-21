@@ -63,8 +63,10 @@ const PendingRequests = () => {
         (request?.latestProject?.title || "")
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
+
+      const reqStatus = (request?.status || "").toLowerCase();
       const matchesStatus =
-        filterStatus === "all" || request.status === filterStatus;
+        filterStatus === "all" || reqStatus === filterStatus;
       return matchesSearch && matchesStatus;
     }) || [];
 
@@ -102,7 +104,7 @@ const PendingRequests = () => {
               >
                 <option value="all">All Requests</option>
                 <option value="pending">Pending</option>
-                <option value="accepted">Accepted</option>
+                <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
               </select>
             </div>
@@ -118,17 +120,23 @@ const PendingRequests = () => {
             const projectStatus = project?.status?.toLowerCase() || "pending";
             const supervisorAssigned = !!project?.supervisor;
 
+            // normalize request status for comparisons / display
+            const reqStatus = (req?.status || "").toLowerCase();
+
             const canAccept =
-              projectStatus === "approved" && !supervisorAssigned;
+              !supervisorAssigned && projectStatus !== "rejected";
 
             const lm = loadingMap[id] || {};
 
             let bgClass = "bg-white";
             let StatusMessage = "";
 
-            if (projectStatus === "approved" && !supervisorAssigned) {
+            if (projectStatus === "approved" && supervisorAssigned) {
               bgClass = "bg-green-50 border-blue-300";
               StatusMessage = "Supervisor already assigned";
+            } else if (projectStatus === "approved" && !supervisorAssigned) {
+              bgClass = "bg-green-50 border-blue-300";
+              StatusMessage = "Project approved — ready to assign supervisor";
             } else if (projectStatus === "rejected") {
               bgClass = "bg-red-50 border-red-300";
               StatusMessage = "Project proposal rejected";
@@ -147,16 +155,16 @@ const PendingRequests = () => {
                       </h3>
                       <span
                         className={`badge ${
-                          req.status === "pending"
+                          reqStatus === "pending"
                             ? "badge-pending"
-                            : req.status === "accepted"
+                            : reqStatus === "approved"
                               ? "badge-approved"
                               : "badge-rejected"
                         }`}
                       >
-                        {req.status
-                          ? req.status.charAt(0).toUpperCase() +
-                            req.status.slice(1)
+                        {reqStatus
+                          ? reqStatus.charAt(0).toUpperCase() +
+                            reqStatus.slice(1)
                           : "Unknown"}
                       </span>
                     </div>
@@ -183,7 +191,7 @@ const PendingRequests = () => {
 
                   {/* ACTIONS */}
 
-                  {req.status === "pending" && (
+                  {reqStatus === "pending" && (
                     <div className="flex items-center gap-3 mt-3">
                       {/* Accept Button */}
                       <button

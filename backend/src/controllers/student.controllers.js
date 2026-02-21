@@ -13,6 +13,7 @@ import * as NotificationService from "../services/notification.services.js";
 import * as fileService from "../services/file.services.js";
 import { Project } from "../models/project.models.js";
 import { Notification } from "../models/notification.models.js";
+import { UserRoleEnums } from "../utils/constants.js";
 
 const getStudentProjects = asyncHandler(async (req, res, next) => {
   const studentId = req.user._id;
@@ -102,7 +103,7 @@ const uploadProjectFiles = asyncHandler(async (req, res, next) => {
 });
 
 const getAvailableSupervisors = asyncHandler(async (req, res, next) => {
-  const supervisors = await User.find({ role: "Supervisor" })
+  const supervisors = await User.find({ role: UserRoleEnums.TEACHER })
     .select("name email department expertise")
     .lean(); // .lean for better performance since we have reading only permission for data
 
@@ -114,7 +115,7 @@ const getAvailableSupervisors = asyncHandler(async (req, res, next) => {
 });
 
 const getSupervisor = asyncHandler(async (req, res, next) => {
-  const { studentId } = req.user._id;
+  const studentId = req.user._id;
   const student = await User.findById(studentId).populate(
     "supervisor",
     "name email department expertise",
@@ -146,7 +147,7 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
   }
 
   const supervisor = await User.findById(teacherId);
-  if (!supervisor || supervisor.role !== "Teacher") {
+  if (!supervisor || supervisor.role !== UserRoleEnums.TEACHER) {
     return next(new ErrorHandler("Invalid supervisor selected", 404));
   }
 
@@ -167,7 +168,7 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
   await NotificationService.notifyUser(
     teacherId,
     `${student.name} has requested you to be their supervisor.`,
-    "request",
+    "Request",
     "teacher/requests",
     "Medium",
   );
