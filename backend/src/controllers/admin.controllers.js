@@ -235,7 +235,7 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
 
   await NotificationService.notifyUser(
     supervisorId,
-    `You have been assigned as supervisor for a student's project.`,
+    `${supervisor.name} has been assigned as supervisor for a student's project.`,
     "Success",
     "/teacher/students",
     "High",

@@ -10,7 +10,7 @@ const getNotifications = asyncHandler(async (req, res) => {
   let query = {};
 
   if (role === "Admin") {
-    query.type = { $in: ["Request"] };
+    // Admins can see all notifications as recent activity
   } else {
     query.user = userId;
   }

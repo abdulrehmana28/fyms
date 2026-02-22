@@ -38,7 +38,7 @@ const AdminDashboard = () => {
   const { isCreateStudentModalOpen, isCreateTeacherModalOpen } = useSelector(
     (state) => state.popup,
   );
-  const { notifications } = useSelector((state) => state.notification.list);
+  const notifications = useSelector((state) => state.notification.list);
 
   const dispatch = useDispatch();
 

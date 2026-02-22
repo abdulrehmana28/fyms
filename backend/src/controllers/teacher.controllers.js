@@ -116,7 +116,7 @@ const acceptRequest = asyncHandler(async (req, res, next) => {
 
   await notificationService.notifyUser(
     request.student._id,
-    `Your request has been accepted by ${req.user.name}.`,
+    `${request.student.name}'s request has been accepted by ${req.user.name}.`,
     "Success",
     "/students/status",
     "High",
@@ -153,7 +153,7 @@ const rejectRequest = asyncHandler(async (req, res, next) => {
 
   await notificationService.notifyUser(
     request.student._id,
-    `Your request has been rejected by ${req.user.name}.`,
+    `${request.student.name}'s request has been rejected by ${req.user.name}.`,
     "Alert",
     "/students/status",
     "High",
@@ -212,7 +212,7 @@ const markProjectAsCompleted = asyncHandler(async (req, res, next) => {
 
   await notificationService.notifyUser(
     project.student._id,
-    `Your project "${project.title}" has been marked as completed by ${req.user.name}.`,
+    `${project.student.name}'s project "${project.title}" has been marked as completed by ${req.user.name}.`,
     "Success",
     "/students/status",
     "Low",
@@ -262,7 +262,7 @@ const addFeedbackToProject = asyncHandler(async (req, res, next) => {
 
   await notificationService.notifyUser(
     project.student._id,
-    `Your project "${project.title}" has received new feedback from ${req.user.name}.`,
+    `${project.student.name}'s project "${project.title}" has received new feedback from ${req.user.name}.`,
     "Feedback",
     "/students/feedback",
     "Low",

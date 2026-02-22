@@ -177,7 +177,7 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
 
   await NotificationService.notifyUser(
     teacherId,
-    `${student.name} has requested you to be their supervisor.`,
+    `${student.name} has requested ${supervisor.name} to be their supervisor.`,
     "Request",
     "teacher/requests",
     "Medium",
@@ -223,8 +223,8 @@ const getDashBoardStats = asyncHandler(async (req, res, next) => {
   const feedbackNotifications =
     project?.feedback && project?.feedback.length > 0
       ? [...project.feedback]
-          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-          .slice(0, 2)
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 2)
       : [];
 
   const supervisorName = project?.supervisor?.name || null;
