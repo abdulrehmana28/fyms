@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import AddTeacher from "../../components/modal/AddTeacher";
 
 import { Plus } from "lucide-react";
 import { toggleTeacherModal } from "../../store/slices/popupSlice";
-import { deleteTeacher, updateTeacher } from "../../store/slices/adminSlice";
+import { deleteTeacher, updateTeacher, getAllUsers } from "../../store/slices/adminSlice";
 import {
   CheckCircle,
   TriangleAlert,
@@ -44,6 +44,11 @@ const ManageTeachers = () => {
   });
 
   const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(getAllUsers());
+  }, [dispatch]);
+
 
   const teachers = useMemo(() => {
     return (users || []).filter(
@@ -308,7 +313,7 @@ const ManageTeachers = () => {
                         )} */}
 
                         {Array.isArray(teacher.expertise) &&
-                        teacher.expertise.length > 0 ? (
+                          teacher.expertise.length > 0 ? (
                           <div className="text-sm text-slate-900">
                             {teacher.expertise.join(", ")}
                           </div>

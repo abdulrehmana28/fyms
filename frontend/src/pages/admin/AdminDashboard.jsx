@@ -292,7 +292,6 @@ const AdminDashboard = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={supervisorsBucket}
-                      layout="vertical"
                       margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
                       barCategoryGap={"20%"}
                     >

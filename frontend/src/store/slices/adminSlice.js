@@ -167,15 +167,15 @@ const getDashboardStats = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const response = await axiosInstance.get(`/admin/fetch-dashboard-stats/`);
-      return response.data.data.stats;
+      return response.data.data;
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Failed to fetch Admin Dashboard Stats",
+        "Failed to fetch Admin Dashboard Stats",
       );
       return thunkAPI.rejectWithValue(
         error.response?.data?.message ||
-          "Failed to fetch Admin Dashboard Stats",
+        "Failed to fetch Admin Dashboard Stats",
       );
     }
   },

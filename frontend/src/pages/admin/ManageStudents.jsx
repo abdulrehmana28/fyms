@@ -13,6 +13,7 @@ import { toggleStudentModal } from "../../store/slices/popupSlice";
 import {
   createStudent,
   getAllUsers,
+  getAllProjects,
   updateStudent,
   deleteStudent,
 } from "../../store/slices/adminSlice";
@@ -35,6 +36,14 @@ const ManageStudents = () => {
 
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    if (!users || users.length === 0) {
+      dispatch(getAllUsers());
+    }
+    dispatch(getAllProjects());
+  }, [dispatch, users]);
+
+
   const students = useMemo(() => {
     const studentUsers = (users || []).filter(
       (user) => user.role?.toLowerCase() === "student",
@@ -42,15 +51,18 @@ const ManageStudents = () => {
 
     return studentUsers.map((student) => {
       const studentId = student._id || student.id;
-      const studentProject = (projects || []).find(
-        (project) => project.student === studentId,
-      );
+      const studentProject = (projects || []).find((p) => {
+        const pid = p.student?._id || p.student;
+        return pid === studentId;
+      });
+
+      // Prefer supervisor from project object, fall back to student object
+      const supervisorInfo = studentProject?.supervisor || student.supervisor;
+
       return {
         ...student,
         projectTitle: studentProject ? studentProject?.title : null,
-        supervisor: studentProject?.supervisor
-          ? studentProject?.supervisor.name
-          : null,
+        supervisor: supervisorInfo?._id || supervisorInfo,
         projectStatus: studentProject ? studentProject?.status : null,
       };
     });

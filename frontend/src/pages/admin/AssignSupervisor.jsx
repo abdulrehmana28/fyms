@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { getAllUsers, assignSupervisor } from "../../store/slices/adminSlice";
+import { getAllUsers, assignSupervisor, getAllProjects } from "../../store/slices/adminSlice";
 import { AlertTriangle, CheckCircle, Users } from "lucide-react";
 
 const AssignSupervisor = () => {
@@ -17,6 +17,7 @@ const AssignSupervisor = () => {
     if (!users || users.length === 0) {
       dispatch(getAllUsers());
     }
+    dispatch(getAllProjects());
   }, [dispatch, users]);
 
   const teachers = useMemo(() => {
