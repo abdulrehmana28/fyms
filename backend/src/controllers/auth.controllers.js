@@ -43,12 +43,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
   );
 
   generateToken(newUser, 201, "User registered successfully", res);
-
-  res.status(201).json({
-    success: true,
-    message: "User registered successfully",
-    user: createdUser,
-  });
 });
 
 const loginUser = asyncHandler(async (req, res, next) => {
@@ -71,11 +65,6 @@ const loginUser = asyncHandler(async (req, res, next) => {
   }
 
   generateToken(user, 200, "Login successful", res);
-
-  res.status(200).json({
-    success: true,
-    message: "Login successful",
-  });
 });
 
 const logoutUser = asyncHandler(async (req, res, next) => {

@@ -252,7 +252,7 @@ const teacherSlice = createSlice({
     });
 
     builder.addCase(getStudentProjectFiles.fulfilled, (state, action) => {
-      state.files = action.payload?.files || action.payload || [];
+      state.files = Array.isArray(action.payload) ? action.payload : [];
     });
   },
 });

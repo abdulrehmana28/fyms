@@ -76,7 +76,7 @@ const fetchAvailableSupervisors = createAsyncThunk(
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Failed to fetch available supervisors.",
+        "Failed to fetch available supervisors.",
       );
       return thunkAPI.rejectWithValue(
         error.response?.data.message || "Network Error",
@@ -233,8 +233,9 @@ const studentSlice = createSlice({
     });
 
     builder.addCase(uploadProjectFiles.fulfilled, (state, action) => {
-      const newFiles = action.payload?.project?.files || action.payload || [];
-      state.files = [...state.files, ...newFiles];
+      const updatedProject = action.payload?.project || action.payload;
+      state.project = updatedProject;
+      state.files = updatedProject?.files || [];
     });
     builder.addCase(fetchDashboardStats.fulfilled, (state, action) => {
       state.dashboardStats = action.payload || [];

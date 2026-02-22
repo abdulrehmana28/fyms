@@ -29,14 +29,10 @@ const UploadFiles = () => {
   };
 
   const handleUpload = (e) => {
-    const activeProject = project;
-
-    // if (activeProject) {
-    //   const action = dispatch(fetchProject());
-    //   if (fetchProject.fulfilled.match(action)) {
-    //     activeProject = action.payload.project || action.payload;
-    //   }
-    // }
+    if (!project) {
+      toast.error("Project details not loaded. Please refresh.");
+      return;
+    }
 
     if (selectedFiles.length === 0) {
       toast.error("Please select files to upload.");
@@ -45,8 +41,8 @@ const UploadFiles = () => {
 
     dispatch(
       uploadProjectFiles({
-        projectId: activeProject._id,
-        files: selectedFiles,
+        projectId: project._id,
+        projectFiles: selectedFiles,
       }),
     );
     setSelectedFiles([]);

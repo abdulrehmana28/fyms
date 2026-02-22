@@ -277,7 +277,7 @@ const addFeedbackToProject = asyncHandler(async (req, res, next) => {
 
 const getStudentProjectFiles = asyncHandler(async (req, res, next) => {
   const teacherId = req.user._id;
-  const { projects } =
+  const projects =
     await projectService.getProjectsBySupervisorId(teacherId);
 
   const allFiles = projects.flatMap((project) =>

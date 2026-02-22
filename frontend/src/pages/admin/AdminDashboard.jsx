@@ -43,7 +43,7 @@ const AdminDashboard = () => {
   const dispatch = useDispatch();
 
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-  const [reportSearch, setReportSearch] = useState(false);
+  const [reportSearch, setReportSearch] = useState("");
 
   useEffect(() => {
     dispatch(getDashboardStats());
