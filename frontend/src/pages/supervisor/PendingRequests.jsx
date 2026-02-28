@@ -4,27 +4,31 @@ import { toast } from "react-toastify";
 import {
   acceptRequest,
   rejectRequest,
-  getTeacherRequests,
-} from "../../store/slices/teacherSlice";
+  getSupervisorRequests,
+} from "../../store/slices/supervisorSlice";
 import { FileText, ChevronDown, ChevronUp } from "lucide-react";
 
 const PendingRequests = () => {
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   // show only pending items by default since this page is about pending requests
-  // teachers were reporting they never saw action buttons because the list often
+  // supervisors were reporting they never saw action buttons because the list often
   // contained only approved/rejected entries. Defaulting to "pending" matches
   // the page title and makes it obvious when there's work to do.
   const [filterStatus, setFilterStatus] = useState("pending");
   const [loadingMap, setLoadingMap] = useState({});
   const [expandedId, setExpandedId] = useState(null);
-  const { list } = useSelector((state) => state.teacher);
+  const { list } = useSelector((state) => state.supervisor);
   const { authUser } = useSelector((state) => state.auth);
 
+  // derive a stable id value so the dependency array can't throw if
+  // authUser is null/undefined.  the effect already guards early, but
+  // react will still try to evaluate the dependency list on each render.
+  const userId = authUser?._id;
   useEffect(() => {
-    if (!authUser?._id) return;
-    dispatch(getTeacherRequests(authUser._id));
-  }, [dispatch, authUser._id]);
+    if (!userId) return;
+    dispatch(getSupervisorRequests(userId));
+  }, [dispatch, userId]);
 
   const toggleExpand = (id) => {
     setExpandedId(expandedId === id ? null : id);
@@ -63,24 +67,24 @@ const PendingRequests = () => {
     }
   };
 
-  const filteredRequests =
-    list.filter((request) => {
-      const matchesSearch =
-        (request?.student?.name || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase()) ||
-        (request?.latestProject?.title || "")
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase());
+  // make sure we don't call `.filter` on undefined; list comes from redux
+  // and may be undefined while loading, so default to an empty array first.
+  const filteredRequests = (list || []).filter((request) => {
+    const matchesSearch =
+      (request?.student?.name || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (request?.latestProject?.title || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
-      // normalize and trim statuses in case the backend ever includes stray
-      // whitespace (users were reporting missing buttons which turned out to be
-      // a trailing space in the status string).
-      const reqStatus = (request?.status || "").toLowerCase().trim();
-      const matchesStatus =
-        filterStatus === "all" || reqStatus === filterStatus;
-      return matchesSearch && matchesStatus;
-    }) || [];
+    // normalize and trim statuses in case the backend ever includes stray
+    // whitespace (users were reporting missing buttons which turned out to be
+    // a trailing space in the status string).
+    const reqStatus = (request?.status || "").toLowerCase().trim();
+    const matchesStatus = filterStatus === "all" || reqStatus === filterStatus;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <>
@@ -144,7 +148,7 @@ const PendingRequests = () => {
 
             const isExpanded = expandedId === id;
 
-            // teachers are allowed to accept a supervision request as long as the
+            // supervisors are allowed to accept a supervision request as long as the
             // project hasn't been rejected and there isn't already a supervisor.
             // accepting the request will also mark the project "approved" on the
             // backend, so we intentionally allow both pending (pre‑approval) and
@@ -185,16 +189,17 @@ const PendingRequests = () => {
                         {req?.student?.name || "Unknown Student"}
                       </h3>
                       <span
-                        className={`badge ${reqStatus === "pending"
+                        className={`badge ${
+                          reqStatus === "pending"
                             ? "badge-pending"
                             : reqStatus === "approved"
                               ? "badge-approved"
                               : "badge-rejected"
-                          }`}
+                        }`}
                       >
                         {reqStatus
                           ? reqStatus.charAt(0).toUpperCase() +
-                          reqStatus.slice(1)
+                            reqStatus.slice(1)
                           : "Unknown"}
                       </span>
                     </div>
@@ -241,10 +246,11 @@ const PendingRequests = () => {
                       <div className="flex items-center gap-3">
                         {/* Accept Button */}
                         <button
-                          className={`px-4 py-1.5 text-sm rounded-lg font-medium transition-colors duration-200 ${canAccept
+                          className={`px-4 py-1.5 text-sm rounded-lg font-medium transition-colors duration-200 ${
+                            canAccept
                               ? "bg-green-600 hover:bg-green-700 text-white"
                               : "bg-gray-300 text-gray-500 cursor-not-allowed disabled:opacity-60"
-                            }`}
+                          }`}
                           disabled={lm.accepting || !canAccept}
                           onClick={() => handleAccept(req)}
                         >

@@ -2,12 +2,12 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { axiosInstance } from "../../lib/axios";
 import { toast } from "react-toastify";
 
-const getTeacherDashboardStats = createAsyncThunk(
-  "teacher/getTeacherDashboardStats",
+const getSupervisorDashboardStats = createAsyncThunk(
+  "supervisor/getSupervisorDashboardStats",
   async (_, thunkAPI) => {
     try {
       const response = await axiosInstance.get(
-        "/teacher/fetch-dashboard-stats",
+        "/supervisor/fetch-dashboard-stats",
       );
       return response.data.data?.dashboardStats || response.data.data;
     } catch (error) {
@@ -21,19 +21,19 @@ const getTeacherDashboardStats = createAsyncThunk(
   },
 );
 
-// Thunk to fetch teacher supervision requests
-const getTeacherRequests = createAsyncThunk(
-  "teacher/getTeacherRequests",
+// Thunk to fetch supervisor supervision requests
+const getSupervisorRequests = createAsyncThunk(
+  "supervisor/getSupervisorRequests",
   async (supervisorId, thunkAPI) => {
     try {
       const response = await axiosInstance.get(
-        `/teacher/requests?supervisor=${supervisorId}`,
+        `/supervisor/requests?supervisor=${supervisorId}`,
       );
       return response.data.data?.requests || response.data.data;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to fetch requests.");
       return thunkAPI.rejectWithValue(
-        error.response?.data.message || "Network Error",
+        error.response?.data?.message || "Network Error",
       );
     }
   },
@@ -41,11 +41,11 @@ const getTeacherRequests = createAsyncThunk(
 
 // Thunk to accept a supervision request
 const acceptRequest = createAsyncThunk(
-  "teacher/acceptRequest",
+  "supervisor/acceptRequest",
   async (requestId, thunkAPI) => {
     try {
       const response = await axiosInstance.post(
-        `/teacher/requests/accept/${requestId}`,
+        `/supervisor/requests/accept/${requestId}`,
       );
       toast.success(response.data.message || "Request accepted successfully.");
       // backend now returns { request, project } so we hand back the entire
@@ -54,7 +54,7 @@ const acceptRequest = createAsyncThunk(
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to accept request.");
       return thunkAPI.rejectWithValue(
-        error.response?.data.message || "Network Error",
+        error.response?.data?.message || "Network Error",
       );
     }
   },
@@ -62,18 +62,18 @@ const acceptRequest = createAsyncThunk(
 
 // Thunk to reject a supervision request
 const rejectRequest = createAsyncThunk(
-  "teacher/rejectRequest",
+  "supervisor/rejectRequest",
   async (requestId, thunkAPI) => {
     try {
       const response = await axiosInstance.post(
-        `/teacher/requests/reject/${requestId}`,
+        `/supervisor/requests/reject/${requestId}`,
       );
       toast.success(response.data.message || "Request rejected successfully.");
       return response.data.data?.request || response.data.data;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to reject request.");
       return thunkAPI.rejectWithValue(
-        error.response?.data.message || "Network Error",
+        error.response?.data?.message || "Network Error",
       );
     }
   },
@@ -81,11 +81,11 @@ const rejectRequest = createAsyncThunk(
 
 // Thunk to mark a project as complete
 const markProjectComplete = createAsyncThunk(
-  "teacher/markProjectComplete",
+  "supervisor/markProjectComplete",
   async (projectId, thunkAPI) => {
     try {
       const response = await axiosInstance.post(
-        `/teacher/mark-project-completed/${projectId}`,
+        `/supervisor/mark-project-completed/${projectId}`,
       );
       toast.success(response.data.message || "Project marked as complete.");
       return { projectId };
@@ -94,18 +94,18 @@ const markProjectComplete = createAsyncThunk(
         error.response?.data?.message || "Failed to mark project as complete.",
       );
       return thunkAPI.rejectWithValue(
-        error.response?.data.message || "Network Error",
+        error.response?.data?.message || "Network Error",
       );
     }
   },
 );
 // Thunk to add feedback to a project
 const addFeedback = createAsyncThunk(
-  "teacher/addFeedback",
+  "supervisor/addFeedback",
   async ({ projectId, payload }, thunkAPI) => {
     try {
       const res = await axiosInstance.post(
-        `/teacher/feedback/${projectId}`,
+        `/supervisor/feedback/${projectId}`,
         payload,
       );
       toast.success(res.data.message || "Feedback posted successfully");
@@ -123,10 +123,10 @@ const addFeedback = createAsyncThunk(
 );
 // Thunk to get assigned students
 const getAssignedStudents = createAsyncThunk(
-  "teacher/getAssignedStudents",
+  "supervisor/getAssignedStudents",
   async (_, thunkAPI) => {
     try {
-      const res = await axiosInstance.get(`/teacher/assigned-students`);
+      const res = await axiosInstance.get(`/supervisor/assigned-students`);
       return res.data.data?.students || res.data.data || res.data;
     } catch (error) {
       toast.error(
@@ -140,11 +140,11 @@ const getAssignedStudents = createAsyncThunk(
 );
 
 const downloadStudentProjectFiles = createAsyncThunk(
-  "teacher/downloadStudentProjectFiles",
+  "supervisor/downloadStudentProjectFiles",
   async ({ projectId, fileId }, thunkAPI) => {
     try {
       const response = await axiosInstance.get(
-        `/teacher/projects/download/${projectId}/${fileId}`,
+        `/supervisor/projects/download/${projectId}/${fileId}`,
         {
           responseType: "blob", // tell axios to expect a blob response its a file
         },
@@ -155,31 +155,31 @@ const downloadStudentProjectFiles = createAsyncThunk(
         error.response?.data?.message || "Failed to download project file.",
       );
       return thunkAPI.rejectWithValue(
-        error.response?.data.message || "Network Error",
+        error.response?.data?.message || "Network Error",
       );
     }
   },
 );
 
 const getStudentProjectFiles = createAsyncThunk(
-  "teacher/getStudentProjectFiles",
+  "supervisor/getStudentProjectFiles",
   async (_, thunkAPI) => {
     try {
-      const response = await axiosInstance.get(`/teacher/project/files`);
+      const response = await axiosInstance.get(`/supervisor/project/files`);
       return response.data.data?.files || response.data.data || response.data;
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to get project files.",
       );
       return thunkAPI.rejectWithValue(
-        error.response?.data.message || "Network Error",
+        error.response?.data?.message || "Network Error",
       );
     }
   },
 );
 
-const teacherSlice = createSlice({
-  name: "teacher",
+const supervisorSlice = createSlice({
+  name: "supervisor",
   initialState: {
     assignedStudents: [],
     files: [],
@@ -209,28 +209,29 @@ const teacherSlice = createSlice({
       state.assignedStudents = state.assignedStudents.map((student) =>
         student.projectId === projectId ? { ...student, feedback } : student,
       );
-      builder.addCase(markProjectComplete.fulfilled, (state, action) => {
-        const { projectId } = action.payload;
-        state.assignedStudents = state.assignedStudents.map((student) => {
-          if (student.project?._id === projectId) {
-            return {
-              ...student,
-              project: {
-                ...student.project,
-                status: "completed",
-              },
-            };
-          }
-          return student;
-        });
+    });
+
+    builder.addCase(markProjectComplete.fulfilled, (state, action) => {
+      const { projectId } = action.payload;
+      state.assignedStudents = state.assignedStudents.map((student) => {
+        if (student.project?._id === projectId) {
+          return {
+            ...student,
+            project: {
+              ...student.project,
+              status: "completed",
+            },
+          };
+        }
+        return student;
       });
     });
 
-    builder.addCase(getTeacherDashboardStats.fulfilled, (state, action) => {
+    builder.addCase(getSupervisorDashboardStats.fulfilled, (state, action) => {
       state.dashboardStats = action.payload;
     });
 
-    builder.addCase(getTeacherRequests.fulfilled, (state, action) => {
+    builder.addCase(getSupervisorRequests.fulfilled, (state, action) => {
       state.list = action.payload?.requests || action.payload;
     });
 
@@ -257,10 +258,10 @@ const teacherSlice = createSlice({
   },
 });
 
-export default teacherSlice.reducer;
+export default supervisorSlice.reducer;
 export {
-  getTeacherDashboardStats,
-  getTeacherRequests,
+  getSupervisorDashboardStats,
+  getSupervisorRequests,
   acceptRequest,
   rejectRequest,
   markProjectComplete,

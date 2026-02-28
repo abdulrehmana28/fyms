@@ -78,9 +78,9 @@ const deleteStudent = asyncHandler(async (req, res, next) => {
   });
 });
 
-// *** Admin Controllers to Handle Teacher
+// *** Admin Controllers to Handle Supervisor
 
-const createTeacher = asyncHandler(async (req, res, next) => {
+const createSupervisor = asyncHandler(async (req, res, next) => {
   const { name, email, password, department, maxStudents, expertise } =
     req.body;
 
@@ -106,51 +106,58 @@ const createTeacher = asyncHandler(async (req, res, next) => {
       : typeof expertise === "string" && expertise.trim() !== ""
         ? expertise.split(",").map((exp) => exp.trim())
         : [],
-    role: "Teacher",
+    role: "Supervisor",
   });
 
   res.status(201).json({
     success: true,
-    message: "Teacher created successfully",
+    message: "Supervisor created successfully",
     data: { user },
   });
 });
 
-const updateTeacher = asyncHandler(async (req, res, next) => {
+const updateSupervisor = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
-  const updateTeacherData = { ...req.body };
-  delete updateTeacherData.role; // Prevent role update
+  const updateSupervisorData = { ...req.body };
+  delete updateSupervisorData.role; // Prevent role update
 
-  const user = await userService.updateUser(id, updateTeacherData);
+  // ensure the existing user is a supervisor before making updates
+  const existingUser = await userService.getUserById(id);
+  if (!existingUser || existingUser.role !== "Supervisor") {
+    return next(new ErrorHandler("Supervisor not found", 404));
+  }
+
+  const user = await userService.updateUser(id, updateSupervisorData);
 
   if (!user) {
-    return next(new ErrorHandler("Teacher not found", 404));
+    // should be unreachable but keep the check just in case
+    return next(new ErrorHandler("Supervisor not found", 404));
   }
 
   res.status(200).json({
     success: true,
-    message: "Teacher updated successfully",
+    message: "Supervisor updated successfully",
     data: { user },
   });
 });
 
-const deleteTeacher = asyncHandler(async (req, res, next) => {
+const deleteSupervisor = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const user = await userService.getUserById(id);
 
   if (!user) {
-    return next(new ErrorHandler("Teacher not found", 404));
+    return next(new ErrorHandler("Supervisor not found", 404));
   }
 
-  if (user.role !== "Teacher") {
-    return next(new ErrorHandler("Cannot delete non-teacher users", 400));
+  if (user.role !== "Supervisor") {
+    return next(new ErrorHandler("Cannot delete non-supervisor users", 400));
   }
 
   await userService.deleteUser(id);
 
   res.status(200).json({
     success: true,
-    message: "Teacher deleted successfully",
+    message: "Supervisor deleted successfully",
   });
 });
 
@@ -192,11 +199,15 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
   const supervisorUser = await userService.getUserById(supervisorId);
 
   if (!supervisorUser) {
-    return next(new ErrorHandler("supervisorId must be a valid Teacher", 400));
+    return next(
+      new ErrorHandler("supervisorId must be a valid Supervisor", 400),
+    );
   }
 
-  if (supervisorUser.role !== "Teacher") {
-    return next(new ErrorHandler("supervisorId must be a valid Teacher", 400));
+  if (supervisorUser.role !== "Supervisor") {
+    return next(
+      new ErrorHandler("supervisorId must be a valid Supervisor", 400),
+    );
   }
 
   const project = await Project.findOne({ student: studentId });
@@ -237,7 +248,7 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
     supervisorId,
     `${supervisor.name} has been assigned as supervisor for a student's project.`,
     "Success",
-    "/teacher/students",
+    "/supervisor/students",
     "High",
   );
   await NotificationService.notifyUser(
@@ -260,14 +271,14 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
 const getAllDashboardStats = asyncHandler(async (req, res, next) => {
   const [
     totalStudents,
-    totalTeachers,
+    totalSupervisors,
     totalProjects,
     pendingRequests,
     completedProjects,
     pendingProjects,
   ] = await Promise.all([
     User.countDocuments({ role: "Student" }),
-    User.countDocuments({ role: "Teacher" }),
+    User.countDocuments({ role: "Supervisor" }),
     Project.countDocuments(),
     SupervisorRequest.countDocuments({ status: "Pending" }),
     Project.countDocuments({ status: "Completed" }),
@@ -279,7 +290,7 @@ const getAllDashboardStats = asyncHandler(async (req, res, next) => {
     message: "Admin Dashboard stats retrieved successfully",
     data: {
       totalStudents,
-      totalTeachers,
+      totalSupervisors,
       totalProjects,
       pendingRequests,
       completedProjects,
@@ -353,9 +364,9 @@ export {
   createStudent,
   updateStudent,
   deleteStudent,
-  createTeacher,
-  updateTeacher,
-  deleteTeacher,
+  createSupervisor,
+  updateSupervisor,
+  deleteSupervisor,
   getAllUsers,
   getAllProjects,
   getAllDashboardStats,

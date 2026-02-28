@@ -18,16 +18,16 @@ import SupervisorPage from "./pages/student/SupervisorPage";
 import FeedbackPage from "./pages/student/FeedbackPage";
 import NotificationsPage from "./pages/student/NotificationsPage";
 
-// Teacher Pages
-import TeacherDashboard from "./pages/teacher/TeacherDashboard";
-import PendingRequests from "./pages/teacher/PendingRequests";
-import AssignedStudents from "./pages/teacher/AssignedStudents";
-import TeacherFiles from "./pages/teacher/TeacherFiles";
+// Supervisor Pages
+import SupervisorDashboard from "./pages/supervisor/SupervisorDashboard";
+import PendingRequests from "./pages/supervisor/PendingRequests";
+import AssignedStudents from "./pages/supervisor/AssignedStudents";
+import SupervisorFiles from "./pages/supervisor/SupervisorFiles";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ManageStudents from "./pages/admin/ManageStudents";
-import ManageTeachers from "./pages/admin/ManageTeachers";
+import ManageSupervisors from "./pages/admin/ManageSupervisors";
 import AssignSupervisor from "./pages/admin/AssignSupervisor";
 import DeadlinesPage from "./pages/admin/DeadlinesPage";
 import ProjectsPage from "./pages/admin/ProjectsPage";
@@ -143,19 +143,19 @@ const App = () => {
             <Route path="notifications" element={<NotificationsPage />} />
           </Route>
 
-          {/* Teacher Routes */}
+          {/* Supervisor Routes */}
           <Route
-            path="/teacher/*"
+            path="/supervisor/*"
             element={
-              <ProtectedRoute allowedRoles={["Teacher"]}>
-                <DashboardLayout userRole={"Teacher"} />
+              <ProtectedRoute allowedRoles={["Supervisor"]}>
+                <DashboardLayout userRole={"Supervisor"} />
               </ProtectedRoute>
             }
           >
-            <Route index element={<TeacherDashboard />} />
+            <Route index element={<SupervisorDashboard />} />
             <Route path="pending-requests" element={<PendingRequests />} />
             <Route path="assigned-students" element={<AssignedStudents />} />
-            <Route path="files" element={<TeacherFiles />} />
+            <Route path="files" element={<SupervisorFiles />} />
           </Route>
 
           {/* Admin Routes */}
@@ -169,7 +169,7 @@ const App = () => {
           >
             <Route index element={<AdminDashboard />} />
             <Route path="students" element={<ManageStudents />} />
-            <Route path="teachers" element={<ManageTeachers />} />
+            <Route path="supervisors" element={<ManageSupervisors />} />
             <Route path="assign-supervisor" element={<AssignSupervisor />} />
             <Route path="deadlines" element={<DeadlinesPage />} />
             <Route path="projects" element={<ProjectsPage />} />

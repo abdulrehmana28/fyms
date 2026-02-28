@@ -11,7 +11,7 @@ import {
 } from "recharts";
 import { useDispatch, useSelector } from "react-redux";
 import AddStudent from "../../components/modal/AddStudent";
-import AddTeacher from "../../components/modal/AddTeacher";
+import AddSupervisor from "../../components/modal/AddSupervisor";
 import { getNotifications } from "../../store/slices/notificationSlice";
 import { downloadProjectFiles } from "../../store/slices/projectSlice";
 import {
@@ -30,12 +30,12 @@ import {
 } from "lucide-react";
 import {
   toggleStudentModal,
-  toggleTeacherModal,
+  toggleSupervisorModal,
 } from "../../store/slices/popupSlice";
 
 const AdminDashboard = () => {
   const { stats, projects } = useSelector((state) => state.admin);
-  const { isCreateStudentModalOpen, isCreateTeacherModalOpen } = useSelector(
+  const { isCreateStudentModalOpen, isCreateSupervisorModalOpen } = useSelector(
     (state) => state.popup,
   );
   const notifications = useSelector((state) => state.notification.list);
@@ -183,8 +183,8 @@ const AdminDashboard = () => {
       Icon: User,
     },
     {
-      title: "Total Teachers",
-      value: stats?.totalTeachers ?? 0,
+      title: "Total Supervisors",
+      value: stats?.totalSupervisors ?? 0,
       bg: "bg-green-100",
       iconBg: "bg-green-100",
       iconColor: "text-green-600",
@@ -224,8 +224,8 @@ const AdminDashboard = () => {
       Icon: PlusIcon, // lucide-react icon
     },
     {
-      label: "Add Teacher",
-      onClick: () => dispatch(toggleTeacherModal()),
+      label: "Add Supervisor",
+      onClick: () => dispatch(toggleSupervisorModal()),
       btnClass: "btn-secondary",
       Icon: PlusIcon,
     },
@@ -485,7 +485,7 @@ const AdminDashboard = () => {
         )}
 
         {isCreateStudentModalOpen && <AddStudent />}
-        {isCreateTeacherModalOpen && <AddTeacher />}
+        {isCreateSupervisorModalOpen && <AddSupervisor />}
       </div>
     </>
   );

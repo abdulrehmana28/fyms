@@ -113,7 +113,7 @@ const uploadProjectFiles = asyncHandler(async (req, res, next) => {
 });
 
 const getAvailableSupervisors = asyncHandler(async (req, res, next) => {
-  const supervisors = await User.find({ role: UserRoleEnums.TEACHER })
+  const supervisors = await User.find({ role: UserRoleEnums.SUPERVISOR })
     .select("name email department expertise")
     .lean(); // .lean for better performance since we have reading only permission for data
 
@@ -145,7 +145,7 @@ const getSupervisor = asyncHandler(async (req, res, next) => {
 });
 
 const requestSupervisor = asyncHandler(async (req, res, next) => {
-  const { teacherId, message } = req.body;
+  const { supervisorId, message } = req.body;
   const studentId = req.user._id;
 
   const student = await User.findById(studentId);
@@ -156,8 +156,8 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const supervisor = await User.findById(teacherId);
-  if (!supervisor || supervisor.role !== UserRoleEnums.TEACHER) {
+  const supervisor = await User.findById(supervisorId);
+  if (!supervisor || supervisor.role !== UserRoleEnums.SUPERVISOR) {
     return next(new ErrorHandler("Invalid supervisor selected", 404));
   }
 
@@ -169,17 +169,17 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
 
   const requestData = {
     student: studentId,
-    supervisor: teacherId,
+    supervisor: supervisorId,
     message,
   };
 
   const request = await requestService.createRequest(requestData);
 
   await NotificationService.notifyUser(
-    teacherId,
+    supervisorId,
     `${student.name} has requested ${supervisor.name} to be their supervisor.`,
     "Request",
-    "teacher/requests",
+    "supervisor/requests",
     "Medium",
   );
 
@@ -223,8 +223,8 @@ const getDashBoardStats = asyncHandler(async (req, res, next) => {
   const feedbackNotifications =
     project?.feedback && project?.feedback.length > 0
       ? [...project.feedback]
-        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        .slice(0, 2)
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 2)
       : [];
 
   const supervisorName = project?.supervisor?.name || null;

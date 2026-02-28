@@ -20,20 +20,20 @@ import {
   generateRequestRejectionTemplate,
 } from "../utils/emailTemplates.js";
 
-const getTeacherDashboardStats = asyncHandler(async (req, res, next) => {
-  const teacherId = req.user._id;
+const getSupervisorDashboardStats = asyncHandler(async (req, res, next) => {
+  const supervisorId = req.user._id;
 
   const totalPendingRequests = await SupervisorRequest.countDocuments({
-    teacher: teacherId,
+    supervisor: supervisorId,
     status: "Pending",
   });
 
   const completedProjects = await Project.countDocuments({
-    supervisor: teacherId,
+    supervisor: supervisorId,
     status: "Completed",
   });
 
-  const recentNotifications = await Notification.find({ user: teacherId })
+  const recentNotifications = await Notification.find({ user: supervisorId })
     .sort({ createdAt: -1 })
     .limit(5);
 
@@ -45,15 +45,15 @@ const getTeacherDashboardStats = asyncHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    message: "Teacher dashboard stats fetched successfully",
+    message: "Supervisor dashboard stats fetched successfully",
     data: { dashboardStats },
   });
 });
 
 const getRequests = asyncHandler(async (req, res, next) => {
-  const teacherId = req.user._id;
+  const supervisorId = req.user._id;
 
-  const filters = { supervisor: teacherId };
+  const filters = { supervisor: supervisorId };
 
   const { requests, total } = await requestService.getAllRequests(filters);
 
@@ -99,12 +99,15 @@ const getRequests = asyncHandler(async (req, res, next) => {
 
 const acceptRequest = asyncHandler(async (req, res, next) => {
   const { requestId } = req.params;
-  const teacherId = req.user._id;
+  const supervisorId = req.user._id;
 
   // our updated service now returns both the request object and the
   // newly-updated project (if any). callers can ignore the project when not
   // needed.
-  const result = await requestService.acceptRequestById(requestId, teacherId);
+  const result = await requestService.acceptRequestById(
+    requestId,
+    supervisorId,
+  );
 
   if (!result || !result.request) {
     return next(
@@ -123,6 +126,9 @@ const acceptRequest = asyncHandler(async (req, res, next) => {
   );
 
   const student = await User.findById(request.student._id);
+  if (!student) {
+    return next(new ErrorHandler("Student not found", 404));
+  }
   const studentEmail = student.email;
   const message = generateRequestAcceptanceTemplate(req.user.name);
 
@@ -141,9 +147,12 @@ const acceptRequest = asyncHandler(async (req, res, next) => {
 
 const rejectRequest = asyncHandler(async (req, res, next) => {
   const { requestId } = req.params;
-  const teacherId = req.user._id;
+  const supervisorId = req.user._id;
 
-  const request = await requestService.rejectRequestById(requestId, teacherId);
+  const request = await requestService.rejectRequestById(
+    requestId,
+    supervisorId,
+  );
 
   if (!request) {
     return next(
@@ -179,12 +188,12 @@ const rejectRequest = asyncHandler(async (req, res, next) => {
 });
 
 const getAssignedStudents = asyncHandler(async (req, res, next) => {
-  const teacherId = req.user._id;
-  const students = await User.find({ supervisor: teacherId })
+  const supervisorId = req.user._id;
+  const students = await User.find({ supervisor: supervisorId })
     .populate("project")
     .sort({ createdAt: -1 });
 
-  const total = await User.countDocuments({ supervisor: teacherId });
+  const total = await User.countDocuments({ supervisor: supervisorId });
 
   res.status(200).json({
     success: true,
@@ -195,14 +204,14 @@ const getAssignedStudents = asyncHandler(async (req, res, next) => {
 
 const markProjectAsCompleted = asyncHandler(async (req, res, next) => {
   const { projectId } = req.params;
-  const teacherId = req.user._id;
+  const supervisorId = req.user._id;
   const project = await projectService.getProjectById(projectId);
 
   if (!project) {
     return next(new ErrorHandler("Project not found", 404));
   }
 
-  if (project.supervisor._id.toString() !== teacherId.toString()) {
+  if (project.supervisor._id.toString() !== supervisorId.toString()) {
     return next(
       new ErrorHandler("You are not authorized to complete this project", 403),
     );
@@ -227,7 +236,7 @@ const markProjectAsCompleted = asyncHandler(async (req, res, next) => {
 
 const addFeedbackToProject = asyncHandler(async (req, res, next) => {
   const { projectId } = req.params;
-  const teacherId = req.user._id;
+  const supervisorId = req.user._id;
   const { type, title, message } = req.body;
 
   const project = await projectService.getProjectById(projectId);
@@ -236,7 +245,7 @@ const addFeedbackToProject = asyncHandler(async (req, res, next) => {
     return next(new ErrorHandler("Project not found", 404));
   }
 
-  if (project.supervisor._id.toString() !== teacherId.toString()) {
+  if (project.supervisor._id.toString() !== supervisorId.toString()) {
     return next(
       new ErrorHandler(
         "You are not authorized to add feedback to this project",
@@ -254,7 +263,7 @@ const addFeedbackToProject = asyncHandler(async (req, res, next) => {
   const { project: updatedProject, latestFeedback } =
     await projectService.addFeedback(
       projectId,
-      teacherId,
+      supervisorId,
       type,
       title,
       message,
@@ -276,13 +285,12 @@ const addFeedbackToProject = asyncHandler(async (req, res, next) => {
 });
 
 const getStudentProjectFiles = asyncHandler(async (req, res, next) => {
-  const teacherId = req.user._id;
-  const projects =
-    await projectService.getProjectsBySupervisor(teacherId);
+  const supervisorId = req.user._id;
+  const projects = await projectService.getProjectsBySupervisor(supervisorId);
 
   const allFiles = projects.flatMap((project) =>
     project.files.map((file) => ({
-      ...file.toObject ? file.toObject() : file,
+      ...(file.toObject ? file.toObject() : file),
       projectId: project._id,
       projectTitle: project.title,
       studentName: project.student?.name || "N/A",
@@ -309,11 +317,15 @@ const downloadStudentProjectFiles = asyncHandler(async (req, res, next) => {
   const supervisorId = req.user._id;
   const project = await projectService.getProjectById(projectId);
 
-  if (!project || project.supervisor._id.toString() !== supervisorId.toString()) {
+  if (!project) {
+    return next(new ErrorHandler("Project not found", 404));
+  }
+
+  if (project.supervisor._id.toString() !== supervisorId.toString()) {
     return next(
       new ErrorHandler(
-        "Project not found or you do not have permission to download files from this project",
-        404,
+        "You do not have permission to download files from this project",
+        403,
       ),
     );
   }
@@ -326,7 +338,7 @@ const downloadStudentProjectFiles = asyncHandler(async (req, res, next) => {
 });
 
 export {
-  getTeacherDashboardStats,
+  getSupervisorDashboardStats,
   getRequests,
   acceptRequest,
   rejectRequest,

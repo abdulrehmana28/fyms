@@ -27,28 +27,28 @@ const Sidebar = ({ open, setOpen, userRole }) => {
             icon: "bell",
           },
         ];
-      case "Teacher":
+      case "Supervisor":
         return [
-          { name: "Home", path: "/teacher", icon: "home" },
+          { name: "Home", path: "/supervisor", icon: "home" },
           {
             name: "Pending Requests",
-            path: "/teacher/pending-requests",
+            path: "/supervisor/pending-requests",
             icon: "clock",
           },
           {
             name: "Assigned Students",
-            path: "/teacher/assigned-students",
+            path: "/supervisor/assigned-students",
             icon: "users",
           },
-          { name: "Files", path: "/teacher/files", icon: "folder" },
+          { name: "Files", path: "/supervisor/files", icon: "folder" },
         ];
       case "Admin":
         return [
           { name: "Home", path: "/admin", icon: "home" },
           { name: "Manage Students", path: "/admin/students", icon: "users" },
           {
-            name: "Manage Teachers",
-            path: "/admin/teachers",
+            name: "Manage Supervisors",
+            path: "/admin/supervisors",
             icon: "academic",
           },
           {
@@ -359,9 +359,7 @@ const Sidebar = ({ open, setOpen, userRole }) => {
                 open ? "opacity-100" : "opacity-0 lg:opacity-0"
               } ${open ? "block" : "hidden lg:hidden"}`}
             >
-              <p className="text-xs text-slate-500 text-center">
-                CapTrak v1.0
-              </p>
+              <p className="text-xs text-slate-500 text-center">CapTrak v1.0</p>
             </div>
           </div>
         </div>

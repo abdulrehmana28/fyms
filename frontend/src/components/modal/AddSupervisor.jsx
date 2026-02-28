@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { createTeacher } from "../../store/slices/adminSlice";
-import { toggleTeacherModal } from "../../store/slices/popupSlice";
+import { createSupervisor } from "../../store/slices/adminSlice";
+import { toggleSupervisorModal } from "../../store/slices/popupSlice";
 import { X } from "lucide-react";
 
 //TODO: Restore departments list when backend is ready
@@ -27,7 +27,7 @@ const dummyExpertise = [
   "Game Development",
 ];
 
-const AddTeacher = () => {
+const AddSupervisor = () => {
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     name: "",
@@ -38,10 +38,10 @@ const AddTeacher = () => {
     maxStudents: 3,
   });
 
-  const handleCreateTeacher = async (e) => {
+  const handleCreateSupervisor = async (e) => {
     e.preventDefault();
     try {
-      await dispatch(createTeacher(formData)).unwrap();
+      await dispatch(createSupervisor(formData)).unwrap();
       setFormData({
         name: "",
         email: "",
@@ -51,9 +51,9 @@ const AddTeacher = () => {
         maxStudents: 3,
       });
       // close modal after creation
-      dispatch(toggleTeacherModal());
+      dispatch(toggleSupervisorModal());
     } catch (err) {
-      console.error("Failed to create teacher:", err);
+      console.error("Failed to create supervisor:", err);
       // Error notification handled by redux slice
     }
   };
@@ -64,17 +64,18 @@ const AddTeacher = () => {
         <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 mx-4">
           <div className="flex justify-center items-center mb-4">
             <h3 className="text-lg font-semibold text-slate-900 flex-1">
-              Add Teacher
+              Add Supervisor
             </h3>
             <button
-              onClick={() => dispatch(toggleTeacherModal())}
+              onClick={() => dispatch(toggleSupervisorModal())}
               className="text-slate-400 hover:text-slate-600"
+              aria-label="Close supervisor modal"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
-          <form onSubmit={handleCreateTeacher} className="space-y-4">
+          <form onSubmit={handleCreateSupervisor} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Full Name
@@ -152,12 +153,14 @@ const AddTeacher = () => {
                 max={5}
                 min={1}
                 value={formData.maxStudents}
-                onChange={(e) =>
+                onChange={(e) => {
+                  const num = Number(e.target.value);
                   setFormData({
                     ...formData,
-                    maxStudents: e.target.value,
-                  })
-                }
+                    // fallback to previous value if parsing fails
+                    maxStudents: isNaN(num) ? formData.maxStudents : num,
+                  });
+                }}
                 className="input-field w-full py-1 px-2 border-b border-slate-600 focus:outline-none rounded-md"
               />
             </div>
@@ -187,13 +190,13 @@ const AddTeacher = () => {
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"
-                onClick={() => dispatch(toggleTeacherModal())}
+                onClick={() => dispatch(toggleSupervisorModal())}
                 className="btn-danger"
               >
                 Cancel
               </button>
               <button type="submit" className="btn-primary">
-                Add Teacher
+                Add Supervisor
               </button>
             </div>
           </form>
@@ -203,4 +206,4 @@ const AddTeacher = () => {
   );
 };
 
-export default AddTeacher;
+export default AddSupervisor;

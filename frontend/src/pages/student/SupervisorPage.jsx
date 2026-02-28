@@ -73,7 +73,7 @@ const SupervisorPage = () => {
 
     dispatch(
       requestSupervisor({
-        teacherId: selectedSupervisor._id,
+        supervisorId: selectedSupervisor._id,
         message,
       }),
     ).then((response) => {

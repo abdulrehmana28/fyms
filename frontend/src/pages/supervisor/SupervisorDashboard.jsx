@@ -1,16 +1,16 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { getTeacherDashboardStats } from "../../store/slices/teacherSlice";
+import { getSupervisorDashboardStats } from "../../store/slices/supervisorSlice";
 import { CheckCircle, Clock, Loader, MoveDiagonal, Users } from "lucide-react";
 
-const TeacherDashboard = () => {
+const SupervisorDashboard = () => {
   const dispatch = useDispatch();
 
-  const { dashboardStats, loading } = useSelector((state) => state.teacher);
+  const { dashboardStats, loading } = useSelector((state) => state.supervisor);
   const { authUser, isCheckingAuth } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    dispatch(getTeacherDashboardStats());
+    dispatch(getSupervisorDashboardStats());
   }, [dispatch]);
 
   // ----------------
@@ -123,4 +123,4 @@ const TeacherDashboard = () => {
   );
 };
 
-export default TeacherDashboard;
+export default SupervisorDashboard;

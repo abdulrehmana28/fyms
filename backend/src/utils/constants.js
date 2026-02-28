@@ -1,6 +1,6 @@
 export const UserRoleEnums = {
   STUDENT: "Student",
-  TEACHER: "Teacher",
+  SUPERVISOR: "Supervisor",
   ADMIN: "Admin",
 };
 
@@ -26,5 +26,6 @@ export const NotificationPriorityEnums = {
   HIGH: "High",
 };
 
-export const AvailableNotificationPriorities = Object.values(NotificationPriorityEnums);
-
+export const AvailableNotificationPriorities = Object.values(
+  NotificationPriorityEnums,
+);

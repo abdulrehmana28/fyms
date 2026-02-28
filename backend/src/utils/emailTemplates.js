@@ -35,8 +35,8 @@ const generateForgotPasswordEmailTemplate = (resetPasswordUrl) => {
 `;
 };
 
-const generateRequestAcceptanceTemplate = (teacherName) => {
-  const safeTeacherName = escapeHtml(teacherName);
+const generateRequestAcceptanceTemplate = (supervisorName) => {
+  const safeSupervisorName = escapeHtml(supervisorName);
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -53,7 +53,7 @@ const generateRequestAcceptanceTemplate = (teacherName) => {
     <div class="container">
         <h1>Request Accepted</h1>
         <p>Hello,</p>
-        <p>Your request has been accepted by ${safeTeacherName}.</p>
+        <p>Your request has been accepted by ${safeSupervisorName}.</p>
         <p>Best regards,<br>CapTrak Team</p>
     </div>
 </body>
@@ -61,7 +61,7 @@ const generateRequestAcceptanceTemplate = (teacherName) => {
 `;
 };
 
-const generateRequestRejectionTemplate = (teacherName) => {
+const generateRequestRejectionTemplate = (supervisorName) => {
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -78,7 +78,7 @@ const generateRequestRejectionTemplate = (teacherName) => {
     <div class="container">
         <h1>Request Rejected</h1>
         <p>Hello,</p>
-        <p>Your request has been rejected by ${teacherName}.</p>
+        <p>Your request has been rejected by ${supervisorName}.</p>
         <p>Best regards,<br>CapTrak Team</p>
     </div>
 </body>

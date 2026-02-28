@@ -5,15 +5,16 @@ import {
   addFeedback,
   getAssignedStudents,
   markProjectComplete,
-} from "../../store/slices/teacherSlice";
+} from "../../store/slices/supervisorSlice";
 
 const AssignedStudents = () => {
   const [sortBy, setSortBy] = useState("name");
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [completing, setCompleting] = useState(false); // local loading for mark complete
   const { assignedStudents, loading, error } = useSelector(
-    (state) => state.teacher,
+    (state) => state.supervisor,
   );
   const [feedbackData, setFeedbackData] = useState({
     title: "",
@@ -34,6 +35,10 @@ const AssignedStudents = () => {
       case "approved":
         return "bg-blue-100 text-blue-700 border border-blue-300";
 
+      case "in_progress":
+        // styling matches pending for now but explicit branch allows future tweaks
+        return "bg-yellow-100 text-yellow-700 border border-yellow-300";
+
       default:
         return "bg-yellow-100 text-yellow-700 border border-yellow-300";
     }
@@ -42,6 +47,7 @@ const AssignedStudents = () => {
   const getStatusText = (status) => {
     if (status === "completed") return "Completed";
     if (status === "approved") return "Approved";
+    if (status === "in_progress") return "In Progress";
     return "Pending";
   };
 
@@ -123,7 +129,7 @@ const AssignedStudents = () => {
     },
     {
       label: "Total Projects",
-      value: sortedStudents.length,
+      value: sortedStudents.filter((s) => s.project).length,
       bg: "bg-purple-50",
       text: "text-purple-700",
       sub: "text-purple-600",
@@ -217,9 +223,9 @@ const AssignedStudents = () => {
                 </h4>
                 <p className="text-xs text-slate-500">
                   Last Update:{" "}
-                  {new Date(
-                    student.project?.updatedAt || new Date(),
-                  ).toLocaleDateString()}
+                  {student.project?.updatedAt
+                    ? new Date(student.project.updatedAt).toLocaleDateString()
+                    : "N/A"}
                 </p>
               </div>
               {/* actions */}
@@ -336,7 +342,7 @@ const AssignedStudents = () => {
                             title: e.target.value,
                           })
                         }
-                        className="w-full px-3 py-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Enter feedback title"
                       />
                     </div>
@@ -353,7 +359,7 @@ const AssignedStudents = () => {
                             type: e.target.value,
                           })
                         }
-                        className="w-full px-3 py-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Enter feedback type"
                       >
                         <option value="Comment">Comment</option>
@@ -374,18 +380,18 @@ const AssignedStudents = () => {
                           })
                         }
                         rows={4}
-                        className="w-full px-3 py-2 border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                         placeholder="Enter feedback message"
                       />
                     </div>
                   </div>
 
                   <div className="flex gap-3 mt-6">
-                    <button onClick={closeModal} className="btn-danger">
+                    <button onClick={closeModal} className="btn-secondary">
                       Cancel
                     </button>
                     <button
-                      className="btn-secondary"
+                      className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
                       onClick={submitFeedback}
                       disabled={!feedbackData.title || !feedbackData.message}
                     >
@@ -449,20 +455,36 @@ const AssignedStudents = () => {
                 </p>
 
                 <div className="flex gap-3 mt-6">
-                  <button onClick={closeModal} className="btn-danger">
+                  <button
+                    onClick={closeModal}
+                    className="btn-danger"
+                    disabled={completing}
+                  >
                     Cancel
                   </button>
                   <button
-                    className="btn-primary"
-                    onClick={() => {
-                      if (selectedStudent?.project?._id) {
-                        dispatch(
+                    className="btn-primary flex items-center justify-center"
+                    onClick={async () => {
+                      if (!selectedStudent?.project?._id) return;
+                      setCompleting(true);
+                      try {
+                        // thunk returns a promise; unwrap will throw on rejection
+                        await dispatch(
                           markProjectComplete(selectedStudent.project._id),
-                        );
+                        ).unwrap();
                         closeModal();
+                      } catch (err) {
+                        // slice already shows toast on error but we could add here
+                        console.error("Failed to mark complete", err);
+                      } finally {
+                        setCompleting(false);
                       }
                     }}
+                    disabled={completing}
                   >
+                    {completing && (
+                      <Loader className="animate-spin w-4 h-4 mr-2" />
+                    )}
                     Mark as Completed
                   </button>
                 </div>

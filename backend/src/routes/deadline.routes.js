@@ -8,7 +8,7 @@ const router = Router();
 router.post(
   "/create-deadline/:projectId",
   authMiddleware,
-  authorized("Admin", "Teacher"),
+  authorized("Admin", "Supervisor"),
   createDeadline,
 );
 

@@ -12,24 +12,28 @@ import {
 import {
   getStudentProjectFiles,
   downloadStudentProjectFiles,
-} from "../../store/slices/teacherSlice";
+} from "../../store/slices/supervisorSlice";
 
-const TeacherFiles = () => {
+const SupervisorFiles = () => {
   const [viewMode, setViewMode] = useState("grid");
   const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
   const dispatch = useDispatch();
-  const filesFromStore = useSelector((state) => state.teacher.files) || [];
+  const filesFromStore = useSelector((state) => state.supervisor.files) || [];
 
   useEffect(() => {
     dispatch(getStudentProjectFiles());
   }, [dispatch]);
 
   const deriveTypeFormatName = (name) => {
-    if (!name) return "other";
+    // return undefined when we can't determine an extension so callers can
+    // fallback to other properties (e.g. fileType) or default to "other".
+    if (!name) return undefined;
     const parts = name.split(".");
-    return (parts[parts.length - 1] || "").toLowerCase();
+    if (parts.length < 2) return undefined;
+    const ext = (parts[parts.length - 1] || "").toLowerCase();
+    return ext || undefined;
   };
 
   const normalizeFile = (file) => {
@@ -131,7 +135,11 @@ const TeacherFiles = () => {
       }
 
       const { blob } = res.payload;
-      const url = window.URL.createObjectURL(new Blob([blob]));
+      // the payload may already be a Blob; avoid rewrapping which can strip
+      // metadata like type or corrupt binary. only create a new Blob if
+      // necessary (e.g. blob is ArrayBuffer or similar).
+      const downloadBlob = blob instanceof Blob ? blob : new Blob([blob]);
+      const url = window.URL.createObjectURL(downloadBlob);
       const link = document.createElement("a");
       link.href = url;
       link.setAttribute("download", file.name || "download");
@@ -325,7 +333,7 @@ const TeacherFiles = () => {
                       key={file.fileId}
                       className="border-t hover:bg-slate-50 transition-colors"
                     >
-                      <td className="py-3 px-4 items-center gap-3">
+                      <td className="py-3 px-4 flex items-center gap-3">
                         {getFileIcon(file.type)}{" "}
                         <span className="font-medium">{file.name}</span>
                       </td>
@@ -354,4 +362,4 @@ const TeacherFiles = () => {
   );
 };
 
-export default TeacherFiles;
+export default SupervisorFiles;

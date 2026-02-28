@@ -1,19 +1,19 @@
 # FYMS CapTrak - Capstone Project Tracking System
 
-A comprehensive full-stack web application designed to streamline the management and supervision of academic capstone projects. This system facilitates seamless interaction between administrators, teachers, and students throughout the project lifecycle.
+A comprehensive full-stack web application designed to streamline the management and supervision of academic capstone projects. This system facilitates seamless interaction between administrators, supervisors, and students throughout the project lifecycle.
 
 ## 🚀 Features
 
 ### Admin Dashboard
 
-- **User Management**: Add, edit, and manage students and teachers
+- **User Management**: Add, edit, and manage students and supervisors
 - **Project Overview**: Monitor all ongoing capstone projects with real-time statistics
 - **Supervisor Assignment**: Assign and reassign supervisors to student projects
 - **Deadline Management**: Create and manage project deadlines across all projects
 - **Analytics Dashboard**: Visualize project data with interactive charts using Recharts
 - **Bulk Operations**: Download project files and manage multiple projects efficiently
 
-### Teacher Portal
+### Supervisor Portal
 
 - **Assigned Students**: View and manage all assigned students and their projects
 - **Request Management**: Approve or reject supervisor requests from students
@@ -70,7 +70,7 @@ fyms-captrak-proto/
 │   │   │   └── modal/       # Modal components
 │   │   ├── pages/           # Page components
 │   │   │   ├── admin/       # Admin dashboard pages
-│   │   │   ├── teacher/     # Teacher portal pages
+│   │   │   ├── supervisor/     # Supervisor portal pages
 │   │   │   ├── student/     # Student portal pages
 │   │   │   └── auth/        # Authentication pages
 │   │   ├── store/           # Redux store and slices
@@ -190,13 +190,13 @@ The frontend will run on `http://localhost:5173`
 
 1. Login with admin credentials
 2. Navigate to dashboard to view system statistics
-3. Manage students and teachers from dedicated pages
+3. Manage students and supervisors from dedicated pages
 4. Assign supervisors to student projects
 5. Create and monitor project deadlines
 
-### Teacher Access
+### Supervisor Access
 
-1. Login with teacher credentials
+1. Login with supervisor credentials
 2. View assigned students and their projects
 3. Approve/reject supervisor requests
 4. Provide feedback on student submissions
@@ -213,7 +213,7 @@ The frontend will run on `http://localhost:5173`
 ## 🔐 Authentication & Security
 
 - **JWT-based authentication** with httpOnly cookies
-- **Role-based access control** (Admin, Teacher, Student)
+- **Role-based access control** (Admin, Supervisor, Student)
 - **Password hashing** using bcrypt
 - **Rate limiting** to prevent API abuse
 - **CORS configuration** for secure cross-origin requests
@@ -263,7 +263,7 @@ vercel --prod
 - `GET /api/admin/stats` - Get dashboard statistics
 - `GET /api/admin/projects` - Get all projects
 - `POST /api/admin/students` - Add new student
-- `POST /api/admin/teachers` - Add new teacher
+- `POST /api/admin/supervisors` - Add new supervisor
 
 ### Project Routes
 

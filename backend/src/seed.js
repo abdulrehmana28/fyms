@@ -31,22 +31,22 @@ const seedData = async () => {
       role: UserRoleEnums.ADMIN,
     });
 
-    // Create Teachers
-    const teacher1 = await User.create({
+    // Create Supervisors
+    const supervisor1 = await User.create({
       name: "Dr. Ali Aslam",
       email: "ali@example.com",
       password: "12345678",
-      role: UserRoleEnums.TEACHER,
+      role: UserRoleEnums.SUPERVISOR,
       department: "Paleontology",
       expertise: ["Dinosaurs", "Genetics"],
       maxStudents: 3,
     });
 
-    const teacher2 = await User.create({
+    const supervisor2 = await User.create({
       name: "Dr. Nadeem Saeed",
       email: "nadeem@example.com",
       password: "12345678",
-      role: UserRoleEnums.TEACHER,
+      role: UserRoleEnums.SUPERVISOR,
       department: "Paleobotany",
       expertise: ["Plants", "Ecology"],
       maxStudents: 2,
@@ -82,13 +82,13 @@ const seedData = async () => {
     // Project for Student 1 (Approved, with Supervisor)
     const project1 = await Project.create({
       student: student1._id,
-      supervisor: teacher1._id,
+      supervisor: supervisor1._id,
       title: "Automated Dino Feeding System",
       description: "A system to automate the feeding of dinosaurs in the park.",
       status: "Approved",
       feedback: [
         {
-          supervisorId: teacher1._id,
+          supervisorId: supervisor1._id,
           type: "Approval",
           title: "Great Idea",
           message: "This is a necessary project. Approved.",
@@ -96,13 +96,13 @@ const seedData = async () => {
       ],
     });
 
-    // Update Student 1 and Teacher 1 with project association
+    // Update Student 1 and Supervisor 1 with project association
     student1.project = project1._id;
-    student1.supervisor = teacher1._id;
+    student1.supervisor = supervisor1._id;
     await student1.save();
 
-    teacher1.assignedStudents.push(student1._id);
-    await teacher1.save();
+    supervisor1.assignedStudents.push(student1._id);
+    await supervisor1.save();
 
     // Project for Student 2 (Pending)
     const project2 = await Project.create({
@@ -125,10 +125,10 @@ const seedData = async () => {
 
     console.log("Creating Supervisor Requests...");
 
-    // Request from Student 3 to Teacher 2
+    // Request from Student 3 to Supervisor 2
     await SupervisorRequest.create({
       student: student3._id,
-      supervisor: teacher2._id,
+      supervisor: supervisor2._id,
       message: "I would like to study the chaotic nature of plant growth.",
       status: "Pending",
     });
@@ -143,7 +143,7 @@ const seedData = async () => {
     });
 
     await Notification.create({
-      user: teacher2._id,
+      user: supervisor2._id,
       message: "You have a new supervisor request from Ian Malcolm.",
       type: "Request",
       priority: "Medium",

@@ -4,9 +4,9 @@ import {
   createStudent,
   updateStudent,
   deleteStudent,
-  createTeacher,
-  updateTeacher,
-  deleteTeacher,
+  createSupervisor,
+  updateSupervisor,
+  deleteSupervisor,
   getAllUsers,
   getAllProjects,
   getAllDashboardStats,
@@ -51,31 +51,31 @@ router.delete(
 );
 
 // **********************
-// Admin Routes for Teacher Management
+// Admin Routes for Supervisor Management
 // ----------------------
 
-// Route to register a new Teacher
+// Route to register a new Supervisor
 router.post(
-  "/create-teacher",
+  "/create-supervisor",
   authMiddleware,
   authorized("Admin"),
-  createTeacher,
+  createSupervisor,
 );
 
-// Route to update Teacher details
+// Route to update Supervisor details
 router.put(
-  "/update-teacher/:id",
+  "/update-supervisor/:id",
   authMiddleware,
   authorized("Admin"),
-  updateTeacher,
+  updateSupervisor,
 );
 
-// Route to delete a Teacher
+// Route to delete a Supervisor
 router.delete(
-  "/delete-teacher/:id",
+  "/delete-supervisor/:id",
   authMiddleware,
   authorized("Admin"),
-  deleteTeacher,
+  deleteSupervisor,
 );
 
 // **********************

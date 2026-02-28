@@ -62,7 +62,10 @@ const getAllUsers = async () => {
 
 const assignSupervisorDirectly = async (studentId, supervisorId) => {
   const student = await User.findOne({ _id: studentId, role: "Student" });
-  const supervisor = await User.findOne({ _id: supervisorId, role: "Teacher" });
+  const supervisor = await User.findOne({
+    _id: supervisorId,
+    role: "Supervisor",
+  });
 
   if (!student || !supervisor) {
     throw new Error("Invalid student or supervisor ID");

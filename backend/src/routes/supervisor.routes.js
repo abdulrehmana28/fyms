@@ -1,6 +1,6 @@
 import { Router } from "express";
 import {
-  getTeacherDashboardStats,
+  getSupervisorDashboardStats,
   getRequests,
   acceptRequest,
   rejectRequest,
@@ -9,31 +9,31 @@ import {
   addFeedbackToProject,
   downloadStudentProjectFiles,
   getStudentProjectFiles,
-} from "../controllers/teacher.controllers.js";
+} from "../controllers/supervisor.controllers.js";
 import { authMiddleware, authorized } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 // **********************
-// Teacher Routes
+// Supervisor Routes
 // ----------------------
 
-// Route to get teacher's dashboard stats
+// Route to get supervisor's dashboard stats
 router.get(
   "/fetch-dashboard-stats",
   authMiddleware,
-  authorized("Teacher"),
-  getTeacherDashboardStats,
+  authorized("Supervisor"),
+  getSupervisorDashboardStats,
 );
 
-// Route to get teacher's request
-router.get("/requests", authMiddleware, authorized("Teacher"), getRequests);
+// Route to get supervisor's request
+router.get("/requests", authMiddleware, authorized("Supervisor"), getRequests);
 
 // Route to accept a request
 router.post(
   "/requests/accept/:requestId",
   authMiddleware,
-  authorized("Teacher"),
+  authorized("Supervisor"),
   acceptRequest,
 );
 
@@ -41,7 +41,7 @@ router.post(
 router.post(
   "/requests/reject/:requestId",
   authMiddleware,
-  authorized("Teacher"),
+  authorized("Supervisor"),
   rejectRequest,
 );
 
@@ -49,7 +49,7 @@ router.post(
 router.post(
   "/feedback/:projectId/",
   authMiddleware,
-  authorized("Teacher"),
+  authorized("Supervisor"),
   addFeedbackToProject,
 );
 
@@ -57,7 +57,7 @@ router.post(
 router.post(
   "/mark-project-completed/:projectId",
   authMiddleware,
-  authorized("Teacher"),
+  authorized("Supervisor"),
   markProjectAsCompleted,
 );
 
@@ -65,7 +65,7 @@ router.post(
 router.get(
   "/assigned-students",
   authMiddleware,
-  authorized("Teacher"),
+  authorized("Supervisor"),
   getAssignedStudents,
 );
 
@@ -73,7 +73,7 @@ router.get(
 router.get(
   "/projects/download/:projectId/:fileId",
   authMiddleware,
-  authorized("Teacher"),
+  authorized("Supervisor"),
   downloadStudentProjectFiles,
 );
 
@@ -81,7 +81,7 @@ router.get(
 router.get(
   "/project/files",
   authMiddleware,
-  authorized("Teacher"),
+  authorized("Supervisor"),
   getStudentProjectFiles,
 );
 

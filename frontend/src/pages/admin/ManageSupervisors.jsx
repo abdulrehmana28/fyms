@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import AddTeacher from "../../components/modal/AddTeacher";
+import { toast } from "react-toastify";
+import AddSupervisor from "../../components/modal/AddSupervisor";
 
 import { Plus } from "lucide-react";
-import { toggleTeacherModal } from "../../store/slices/popupSlice";
-import { deleteTeacher, updateTeacher, getAllUsers } from "../../store/slices/adminSlice";
+import { toggleSupervisorModal } from "../../store/slices/popupSlice";
+import {
+  deleteSupervisor,
+  updateSupervisor,
+  getAllUsers,
+} from "../../store/slices/adminSlice";
 import {
   CheckCircle,
   TriangleAlert,
@@ -13,7 +18,7 @@ import {
   Users,
 } from "lucide-react";
 
-const ManageTeachers = () => {
+const ManageSupervisors = () => {
   // Todo: Replace with real expertise data from backend when available
   const dummyExpertise = [
     "Data Science",
@@ -28,18 +33,20 @@ const ManageTeachers = () => {
     "Game Development",
   ];
   const { users } = useSelector((state) => state.admin);
-  const { isCreateTeacherModalOpen } = useSelector((state) => state.popup);
+  const { isCreateSupervisorModalOpen } = useSelector((state) => state.popup);
   const [showModal, setShowModal] = useState(false);
-  const [editingTeacher, setEditingTeacher] = useState(null);
+  const [editingSupervisor, setEditingSupervisor] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterByDepartment, setFilterByDepartment] = useState("all");
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [teacherToDelete, setTeacherToDelete] = useState(null);
+  const [supervisorToDelete, setSupervisorToDelete] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     department: "",
-    expertise: "",
+    expertise: [],
     maxStudents: 3,
   });
 
@@ -49,86 +56,122 @@ const ManageTeachers = () => {
     dispatch(getAllUsers());
   }, [dispatch]);
 
-
-  const teachers = useMemo(() => {
+  const supervisors = useMemo(() => {
     return (users || []).filter(
-      (user) => user.role?.toLowerCase() === "teacher",
+      (user) => user.role?.toLowerCase() === "supervisor",
     );
   }, [users]);
 
   const departments = useMemo(() => {
     const set = new Set(
-      (teachers || []).map((teacher) => teacher?.department).filter(Boolean),
+      (supervisors || [])
+        .map((supervisor) => supervisor?.department)
+        .filter(Boolean),
     );
 
     return Array.from(set);
-  }, [teachers]);
-  const filteredTeachers = teachers.filter((teacher) => {
+  }, [supervisors]);
+
+  // ensure current editing value appears in dropdown even if not in departments
+  const departmentOptions = useMemo(() => {
+    const opts = new Set(departments);
+    if (formData.department) {
+      opts.add(formData.department);
+    }
+    return Array.from(opts);
+  }, [departments, formData.department]);
+  const filteredSupervisors = supervisors.filter((supervisor) => {
     const matchesSearchTerm =
-      (teacher.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (teacher.email || "").toLowerCase().includes(searchTerm.toLowerCase());
+      (supervisor.name || "")
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      (supervisor.email || "").toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesFilterByDepartment =
-      filterByDepartment === "all" || teacher.department === filterByDepartment;
+      filterByDepartment === "all" ||
+      supervisor.department === filterByDepartment;
     return matchesFilterByDepartment && matchesSearchTerm;
   });
 
+  // supervisors without any assigned students
+  const unassignedCount = supervisors.filter(
+    (s) => (s.assignedStudents?.length ?? 0) === 0,
+  ).length;
+
   const handleCloseModal = () => {
     setShowModal(false);
-    setEditingTeacher(null);
+    setEditingSupervisor(null);
     setFormData({
       name: "",
       email: "",
       department: "",
-      expertise: "",
+      expertise: [],
       maxStudents: 3,
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingTeacher) {
-      // Dispatch update teacher action
-      const teacherId = editingTeacher._id || editingTeacher.id;
-      dispatch(updateTeacher({ id: teacherId, teacherData: formData }));
+    if (editingSupervisor) {
+      // Dispatch update supervisor action and wait for result
+      const supervisorId = editingSupervisor._id || editingSupervisor.id;
+      try {
+        await dispatch(
+          updateSupervisor({ id: supervisorId, supervisorData: formData }),
+        ).unwrap();
+        handleCloseModal();
+      } catch (err) {
+        console.error("Failed to update supervisor", err);
+        toast.error(err?.message || "Failed to update supervisor.");
+        // keep modal open so user can retry
+      }
     }
-
-    handleCloseModal();
   };
 
-  const handleEdit = (teacher) => {
-    setEditingTeacher(teacher);
+  const handleEdit = (supervisor) => {
+    setEditingSupervisor(supervisor);
     setFormData({
-      name: teacher.name || "",
-      email: teacher.email || "",
-      department: teacher.department || "",
-      expertise: Array.isArray(teacher.expertise)
-        ? teacher.expertise[0]
-        : teacher.expertise,
+      name: supervisor.name || "",
+      email: supervisor.email || "",
+      department: supervisor.department || "",
+      expertise: Array.isArray(supervisor.expertise)
+        ? supervisor.expertise
+        : supervisor.expertise
+          ? [supervisor.expertise]
+          : [],
       maxStudents:
-        typeof teacher.maxStudents === "number" ? teacher.maxStudents : 3,
+        typeof supervisor.maxStudents === "number" ? supervisor.maxStudents : 3,
     });
     setShowModal(true);
   };
 
-  const handleDelete = (teacher) => {
-    setTeacherToDelete(teacher);
+  const handleDelete = (supervisor) => {
+    setSupervisorToDelete(supervisor);
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    if (teacherToDelete) {
-      {
-        dispatch(deleteTeacher(teacherToDelete._id));
-        setShowDeleteModal(false);
-        setTeacherToDelete(null);
-      }
+  const confirmDelete = async () => {
+    if (!supervisorToDelete) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
+
+    try {
+      await dispatch(deleteSupervisor(supervisorToDelete._id)).unwrap();
+      // refresh list or rely on slice updates
+      dispatch(getAllUsers());
+      setShowDeleteModal(false);
+      setSupervisorToDelete(null);
+    } catch (err) {
+      console.error("Failed to delete supervisor", err);
+      setDeleteError(err.message || "Failed to delete supervisor");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
   const cancelDelete = () => {
     setShowDeleteModal(false);
-    setTeacherToDelete(null);
+    setSupervisorToDelete(null);
   };
 
   return (
@@ -138,17 +181,17 @@ const ManageTeachers = () => {
         <div className="card">
           <div className="card-header flex flex-col md:flex-row justify-between items-start md:items-center">
             <div>
-              <h1 className="card-title">Manage Teachers</h1>
+              <h1 className="card-title">Manage Supervisors</h1>
               <p className="card-subtitle">
-                Add, edit and manage teacher records
+                Add, edit and manage supervisor records
               </p>
             </div>
             <button
               className="btn-primary flex items-center space-x-2 mt-4 md:mt-0"
-              onClick={() => dispatch(toggleTeacherModal())}
+              onClick={() => dispatch(toggleSupervisorModal())}
             >
               <Plus className=" w-5 h-5 " />
-              <span>Add New Teacher</span>
+              <span>Add New Supervisor</span>
             </button>
           </div>
         </div>
@@ -163,17 +206,17 @@ const ManageTeachers = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-slate-500">
-                  Total Teachers
+                  Total Supervisors
                 </p>
                 <p className="text-lg font-semibold text-slate-800">
-                  {teachers.length}
+                  {supervisors.length}
                 </p>
               </div>
             </div>
           </div>
           {/* Completed Projects Card */}
           <div className="card">
-            <div className="flex item-center">
+            <div className="flex items-center">
               <div className="p-3 bg-blue-100 rounded-lg">
                 <CheckCircle className="w-6 h-6 text-purple-600" />
               </div>
@@ -182,11 +225,11 @@ const ManageTeachers = () => {
                   Assigned Students
                 </p>
                 <p className="text-lg font-semibold text-slate-800">
-                  {teachers.reduce(
-                    (total, teacher) =>
+                  {supervisors.reduce(
+                    (total, supervisor) =>
                       total +
-                      (teacher.assignedStudents
-                        ? teacher.assignedStudents.length
+                      (supervisor.assignedStudents
+                        ? supervisor.assignedStudents.length
                         : 0),
                     0,
                   )}
@@ -196,14 +239,14 @@ const ManageTeachers = () => {
           </div>
           {/* Unassigned Card */}
           <div className="card">
-            <div className="flex item-center">
+            <div className="flex items-center">
               <div className="p-3 bg-blue-100 rounded-lg">
                 <TriangleAlert className="w-6 h-6 text-yellow-600" />
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-slate-500">Unassigned</p>
                 <p className="text-lg font-semibold text-slate-800">
-                  {departments.length}
+                  {unassignedCount}
                 </p>
               </div>
             </div>
@@ -215,7 +258,7 @@ const ManageTeachers = () => {
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Search Teachers
+                Search Supervisors
               </label>
               <input
                 type="text"
@@ -246,18 +289,18 @@ const ManageTeachers = () => {
           </div>
         </div>
 
-        {/* Teachers Table */}
+        {/* Supervisors Table */}
         <div className="card">
           <div className="card-header">
-            <h2 className="card-title">Teachers List</h2>
+            <h2 className="card-title">Supervisors List</h2>
           </div>
           <div className="overflow-x-auto">
-            {filteredTeachers && filteredTeachers.length > 0 ? (
+            {filteredSupervisors && filteredSupervisors.length > 0 ? (
               <table className="w-full">
                 <thead className="bg-slate-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
-                      Teacher Info
+                      Supervisor Info
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wide">
                       Department & Year
@@ -275,47 +318,33 @@ const ManageTeachers = () => {
                 </thead>
 
                 <tbody className="divide-y divide-slate-200">
-                  {filteredTeachers.map((teacher) => (
+                  {filteredSupervisors.map((supervisor) => (
                     <tr
-                      key={teacher._id || teacher.id}
+                      key={supervisor._id || supervisor.id}
                       className="hover:bg-slate-50"
                     >
                       <td className="px-6 py-4 ">
                         <div>
                           <div className="text-sm font-medium text-slate-900">
-                            {teacher.name}
+                            {supervisor.name}
                           </div>
                           <div className="text-sm font-medium text-slate-900">
-                            {teacher.email}
+                            {supervisor.email}
                           </div>
                         </div>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-slate-900">
-                          {teacher.department || "N/A"}
+                          {supervisor.department || "N/A"}
                         </div>
                       </td>
 
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {/* {teacher.expertise ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-gray-800 bg-gray-100 text-xs font-medium">
-                            {typeof teacher.expertise === "object"
-                              ? teacher.expertise.name
-                              : teacher.expertise}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-red-800 bg-red-100 text-xs font-medium">
-                            {teacher.projectStatus === "rejected"
-                              ? "rejected"
-                              : "Not Assigned"}
-                          </span>
-                        )} */}
-
-                        {Array.isArray(teacher.expertise) &&
-                          teacher.expertise.length > 0 ? (
+                        {Array.isArray(supervisor.expertise) &&
+                        supervisor.expertise.length > 0 ? (
                           <div className="text-sm text-slate-900">
-                            {teacher.expertise.join(", ")}
+                            {supervisor.expertise.join(", ")}
                           </div>
                         ) : (
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-red-800 bg-red-100 text-xs font-medium">
@@ -326,8 +355,10 @@ const ManageTeachers = () => {
 
                       <td className="px-6 py-4">
                         <div className="text-sm text-slate-900">
-                          {teacher.createdAt
-                            ? new Date(teacher.createdAt).toLocaleDateString()
+                          {supervisor.createdAt
+                            ? new Date(
+                                supervisor.createdAt,
+                              ).toLocaleDateString()
                             : "N/A"}
                         </div>
                       </td>
@@ -335,13 +366,13 @@ const ManageTeachers = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           <button
-                            onClick={() => handleEdit(teacher)}
+                            onClick={() => handleEdit(supervisor)}
                             className="text-blue-600 hover:text-blue-900"
                           >
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDelete(teacher)}
+                            onClick={() => handleDelete(supervisor)}
                             className="text-red-600 hover:text-red-900"
                           >
                             Delete
@@ -353,9 +384,9 @@ const ManageTeachers = () => {
                 </tbody>
               </table>
             ) : (
-              filteredTeachers.length === 0 && (
+              filteredSupervisors.length === 0 && (
                 <div className="py-8 text-center text-slate-500">
-                  No teachers found.
+                  No supervisors found.
                 </div>
               )
             )}
@@ -367,7 +398,7 @@ const ManageTeachers = () => {
               <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 mx-4">
                 <div className="flex justify-center items-center mb-4">
                   <h3 className="text-lg font-semibold text-slate-900 flex-1">
-                    Edit Teacher
+                    Edit Supervisor
                   </h3>
                   <button
                     onClick={handleCloseModal}
@@ -436,15 +467,22 @@ const ManageTeachers = () => {
                     <select
                       className="input-field w-full py-1 px-2 border-b border-slate-600 focus:outline-none rounded-md"
                       required
+                      multiple
                       value={formData.expertise}
-                      onChange={(e) =>
-                        setFormData({ ...formData, expertise: e.target.value })
-                      }
+                      onChange={(e) => {
+                        const selected = Array.from(
+                          e.target.selectedOptions,
+                          (opt) => opt.value,
+                        );
+                        setFormData({ ...formData, expertise: selected });
+                      }}
                     >
-                      <option value="">Select Expertise</option>
-                      {dummyExpertise.map((expertise) => (
-                        <option key={expertise} value={expertise}>
-                          {expertise}
+                      <option value="" disabled>
+                        Select Expertise (hold Ctrl/Cmd to choose multiple)
+                      </option>
+                      {dummyExpertise.map((expert) => (
+                        <option key={expert} value={expert}>
+                          {expert}
                         </option>
                       ))}
                     </select>
@@ -464,7 +502,7 @@ const ManageTeachers = () => {
                       }
                     >
                       <option value="">Select Department</option>
-                      {departments.map((dept) => (
+                      {departmentOptions.map((dept) => (
                         <option key={dept} value={dept}>
                           {dept}
                         </option>
@@ -481,7 +519,7 @@ const ManageTeachers = () => {
                       Cancel
                     </button>
                     <button type="submit" className="btn-primary">
-                      Update Teacher
+                      Update Supervisor
                     </button>
                   </div>
                 </form>
@@ -491,7 +529,7 @@ const ManageTeachers = () => {
 
           {/* Delete Confirmation Modal */}
 
-          {showDeleteModal && teacherToDelete && (
+          {showDeleteModal && supervisorToDelete && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg w-full max-w-md p-6 mx-4 shadow-xl">
                 <div className="flex items-center mb-4">
@@ -502,36 +540,49 @@ const ManageTeachers = () => {
 
                 <div className="text-center">
                   <h3 className="text-lg font-medium text-slate-900 mb-2 mt-2">
-                    Delete Teacher
+                    Delete Supervisor
                   </h3>
                   <p className="text-sm text-slate-500 mb-4">
-                    Are you sure you want to delete this teacher{" "}
+                    Are you sure you want to delete this supervisor{" "}
                     <span className="text-red-500 font-bold">
-                      "{teacherToDelete.name}" ?{" "}
+                      "{supervisorToDelete.name}" ?{" "}
                     </span>
                     <br />
                     This action cannot be undone.
                   </p>
                 </div>
 
+                {deleteError && (
+                  <p className="text-red-500 text-sm text-center mb-2">
+                    {deleteError}
+                  </p>
+                )}
                 <div className="flex justify-center space-x-3">
-                  <button onClick={cancelDelete} className="btn-secondary">
+                  <button
+                    onClick={cancelDelete}
+                    className="btn-secondary"
+                    disabled={deleteLoading}
+                  >
                     Cancel
                   </button>
 
-                  <button onClick={confirmDelete} className="btn-danger">
-                    Delete
+                  <button
+                    onClick={confirmDelete}
+                    className="btn-danger"
+                    disabled={deleteLoading}
+                  >
+                    {deleteLoading ? "Deleting..." : "Delete"}
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {isCreateTeacherModalOpen && <AddTeacher />}
+          {isCreateSupervisorModalOpen && <AddSupervisor />}
         </div>
       </div>
     </>
   );
 };
 
-export default ManageTeachers;
+export default ManageSupervisors;

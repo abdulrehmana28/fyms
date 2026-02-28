@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import { getAllUsers, assignSupervisor, getAllProjects } from "../../store/slices/adminSlice";
+import {
+  getAllUsers,
+  assignSupervisor,
+  getAllProjects,
+} from "../../store/slices/adminSlice";
 import { AlertTriangle, CheckCircle, Users } from "lucide-react";
 
 const AssignSupervisor = () => {
@@ -20,19 +24,21 @@ const AssignSupervisor = () => {
     dispatch(getAllProjects());
   }, [dispatch, users]);
 
-  const teachers = useMemo(() => {
-    const teacherUsers = (users || []).filter(
-      (user) => (user.role || "").toLowerCase() === "teacher",
+  const supervisors = useMemo(() => {
+    const supervisorUsers = (users || []).filter(
+      (user) => (user.role || "").toLowerCase() === "supervisor",
     );
-    return teacherUsers.map((teacher) => ({
-      ...teacher,
-      assignedCount: Array.isArray(teacher.assignedStudents)
-        ? teacher.assignedStudents.length
+    return supervisorUsers.map((supervisor) => ({
+      ...supervisor,
+      assignedCount: Array.isArray(supervisor.assignedStudents)
+        ? supervisor.assignedStudents.length
         : 0,
       capacityLeft:
-        (typeof teacher.maxStudents === "number" ? teacher.maxStudents : 0) -
-        (Array.isArray(teacher.assignedStudents)
-          ? teacher.assignedStudents.length
+        (typeof supervisor.maxStudents === "number"
+          ? supervisor.maxStudents
+          : 0) -
+        (Array.isArray(supervisor.assignedStudents)
+          ? supervisor.assignedStudents.length
           : 0),
     }));
   }, [users]);
@@ -135,8 +141,8 @@ const AssignSupervisor = () => {
       color: "text-red-600",
     },
     {
-      title: "Available Teachers",
-      value: teachers.filter(
+      title: "Available Supervisors",
+      value: supervisors.filter(
         (t) => (t.assignedCount ?? 0) < (t.maxStudents ?? 0),
       ).length,
       icon: Users,
@@ -289,11 +295,12 @@ const AssignSupervisor = () => {
                         <option value="" disabled>
                           Select Supervisor
                         </option>
-                        {teachers
-                          .filter((teacher) => teacher.capacityLeft > 0)
-                          .map((teacher) => (
-                            <option value={teacher._id} key={teacher._id}>
-                              {teacher.name} ({teacher.capacityLeft} slots left)
+                        {supervisors
+                          .filter((supervisor) => supervisor.capacityLeft > 0)
+                          .map((supervisor) => (
+                            <option value={supervisor._id} key={supervisor._id}>
+                              {supervisor.name} ({supervisor.capacityLeft} slots
+                              left)
                             </option>
                           ))}
                       </select>

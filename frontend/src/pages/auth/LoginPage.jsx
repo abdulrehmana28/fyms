@@ -73,8 +73,8 @@ const LoginPage = () => {
         case "Student":
           navigate("/student");
           break;
-        case "Teacher":
-          navigate("/teacher");
+        case "Supervisor":
+          navigate("/supervisor");
           break;
         case "Admin":
           navigate("/admin");
@@ -162,7 +162,7 @@ const LoginPage = () => {
                   onChange={handleChange}
                 >
                   <option value="Student">Student</option>
-                  <option value="Teacher">Teacher</option>
+                  <option value="Supervisor">Supervisor</option>
                   <option value="Admin">Admin</option>
                 </select>
               </div>

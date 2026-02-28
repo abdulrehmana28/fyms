@@ -25,7 +25,11 @@ const allowedOrigins = [
   process.env.FRONTEND_URL,
   "https://captrak.vercel.app",
   ...(process.env.NODE_ENV !== "production"
-    ? ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"]
+    ? [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:3000",
+      ]
     : []),
 ].filter(Boolean);
 
@@ -67,7 +71,7 @@ import studentRoutes from "./routes/student.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import projectRoutes from "./routes/project.routes.js";
 import deadlineRoutes from "./routes/deadline.routes.js";
-import teacherRoutes from "./routes/teacher.routes.js";
+import supervisorRoutes from "./routes/supervisor.routes.js";
 // routes usage
 app.use("/api/v1/auth", userRoutes);
 app.use("/api/v1/admin", adminRoutes);
@@ -75,7 +79,7 @@ app.use("/api/v1/student", studentRoutes);
 app.use("/api/v1/notification", notificationRoutes);
 app.use("/api/v1/project", projectRoutes);
 app.use("/api/v1/deadline", deadlineRoutes);
-app.use("/api/v1/teacher", teacherRoutes);
+app.use("/api/v1/supervisor", supervisorRoutes);
 // **********************
 // Error Middleware must be the last middleware
 app.use(errorMiddleware);

@@ -114,7 +114,7 @@ userSchema.methods.getResetPasswordToken = function () {
 // };
 
 userSchema.methods.hasCapacity = function () {
-  if (this.role !== UserRoleEnums.TEACHER) return false;
+  if (this.role !== UserRoleEnums.SUPERVISOR) return false;
   return this.assignedStudents.length < this.maxStudents;
 };
 

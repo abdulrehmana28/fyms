@@ -81,63 +81,69 @@ const deleteStudent = createAsyncThunk(
   },
 );
 
-// Teacher Actions
+// Supervisor Actions
 
-const createTeacher = createAsyncThunk(
-  "admin/createTeacher",
-  async (teacherData, thunkAPI) => {
+const createSupervisor = createAsyncThunk(
+  "admin/createSupervisor",
+  async (supervisorData, thunkAPI) => {
     try {
       const response = await axiosInstance.post(
-        "/admin/create-teacher",
-        teacherData,
+        "/admin/create-supervisor",
+        supervisorData,
       );
 
-      toast.success(response.data.message || "Teacher created successfully");
+      toast.success(response.data.message || "Supervisor created successfully");
       return response.data.data.user;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to create Teacher");
+      toast.error(
+        error.response?.data?.message || "Failed to create Supervisor",
+      );
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to create Teacher",
+        error.response?.data?.message || "Failed to create Supervisor",
       );
     }
   },
 );
 
-const updateTeacher = createAsyncThunk(
-  "admin/updateTeacher",
-  async ({ id, teacherData }, thunkAPI) => {
+const updateSupervisor = createAsyncThunk(
+  "admin/updateSupervisor",
+  async ({ id, supervisorData }, thunkAPI) => {
     try {
       const response = await axiosInstance.put(
-        `/admin/update-teacher/${id}`,
-        teacherData,
+        `/admin/update-supervisor/${id}`,
+        supervisorData,
       );
 
-      toast.success(response.data.message || "Teacher updated successfully");
+      toast.success(response.data.message || "Supervisor updated successfully");
 
       return response.data.data.user;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to update teacher");
+      toast.error(
+        error.response?.data?.message || "Failed to update supervisor",
+      );
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to update teacher",
+        error.response?.data?.message || "Failed to update supervisor",
       );
     }
   },
 );
 
-const deleteTeacher = createAsyncThunk(
-  "admin/deleteTeacher",
+const deleteSupervisor = createAsyncThunk(
+  "admin/deleteSupervisor",
   async (id, thunkAPI) => {
     try {
       const response = await axiosInstance.delete(
-        `/admin/delete-teacher/${id}`,
+        `/admin/delete-supervisor/${id}`,
       );
 
-      toast.success(response.data.message || "Teacher deleted successfully");
+      toast.success(response.data.message || "Supervisor deleted successfully");
       return id;
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to delete teacher");
+      toast.error(
+        error.response?.data?.message || "Failed to delete supervisor",
+      );
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || "Failed to delete teacher",
+        error.response?.data?.message || "Failed to delete supervisor",
       );
     }
   },
@@ -171,11 +177,11 @@ const getDashboardStats = createAsyncThunk(
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-        "Failed to fetch Admin Dashboard Stats",
+          "Failed to fetch Admin Dashboard Stats",
       );
       return thunkAPI.rejectWithValue(
         error.response?.data?.message ||
-        "Failed to fetch Admin Dashboard Stats",
+          "Failed to fetch Admin Dashboard Stats",
       );
     }
   },
@@ -258,7 +264,7 @@ const adminSlice = createSlice({
   name: "admin",
   initialState: {
     students: [],
-    teachers: [],
+    supervisors: [],
     projects: [],
     users: [],
     stats: null,
@@ -300,13 +306,13 @@ const adminSlice = createSlice({
         }
       });
 
-    // teacher reducers
+    // supervisor reducers
 
     builder
-      .addCase(createTeacher.fulfilled, (state, action) => {
+      .addCase(createSupervisor.fulfilled, (state, action) => {
         if (state.users) state.users.unshift(action.payload);
       })
-      .addCase(updateTeacher.fulfilled, (state, action) => {
+      .addCase(updateSupervisor.fulfilled, (state, action) => {
         if (state.users) {
           state.users = state.users.map((user) =>
             user._id === action.payload._id
@@ -315,7 +321,7 @@ const adminSlice = createSlice({
           );
         }
       })
-      .addCase(deleteTeacher.fulfilled, (state, action) => {
+      .addCase(deleteSupervisor.fulfilled, (state, action) => {
         if (state.users) {
           state.users = state.users.filter(
             (user) => user._id !== action.payload,
@@ -354,9 +360,9 @@ export {
   createStudent,
   updateStudent,
   deleteStudent,
-  createTeacher,
-  updateTeacher,
-  deleteTeacher,
+  createSupervisor,
+  updateSupervisor,
+  deleteSupervisor,
   getDashboardStats,
   assignSupervisor,
   approveProject,
