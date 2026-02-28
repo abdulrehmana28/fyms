@@ -376,12 +376,12 @@ const AdminDashboard = () => {
                             String(notification.type),
                           )}`}
                         >
-                          Type: {notification.type}
+                          {notification.type}
                         </span>
                         <span
                           className={`px-2 py-0.5 rounded text-sm font-medium`}
                         >
-                          Priority: {notification.priority}
+                          {notification.priority}
                         </span>
                       </div>
                     </div>

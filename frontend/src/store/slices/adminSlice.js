@@ -205,6 +205,55 @@ const assignSupervisor = createAsyncThunk(
   },
 );
 
+const approveProject = createAsyncThunk(
+  "approveProject",
+  async (id, thunkAPI) => {
+    try {
+      const response = await axiosInstance.put(`/admin/project/${id}`, {
+        status: "approved",
+      });
+      toast.success(response.data.message || "Project approved successfully");
+      return id;
+    } catch (error) {
+      toast.error(error.response.data.message || "Failed to approve project");
+      return thunkAPI.rejectWithValue(error.response.data.message);
+    }
+  },
+);
+
+const rejectProject = createAsyncThunk(
+  "rejectProject",
+  async (id, thunkAPI) => {
+    try {
+      const response = await axiosInstance.put(`/admin/project/${id}`, {
+        status: "rejected",
+      });
+      toast.success(response.data.message || "Project rejected successfully");
+      return id;
+    } catch (error) {
+      toast.error(error.response.data.message || "Failed to reject project");
+      return thunkAPI.rejectWithValue(error.response.data.message);
+    }
+  },
+);
+
+const getProjectsBySupervisor = createAsyncThunk(
+  "admin/getProjectsBySupervisor",
+  async (supervisorId, thunkAPI) => {
+    try {
+      const response = await axiosInstance.get(`/project/${supervisorId}`);
+      return (
+        response.data?.data?.project || response.data?.data || response.data
+      );
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to fetch project ");
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to fetch project ",
+      );
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -225,7 +274,7 @@ const adminSlice = createSlice({
 
     // getAllProjects reducer
     builder.addCase(getAllProjects.fulfilled, (state, action) => {
-      state.projects = action.payload.projects;
+      state.projects = action.payload.projects || action.payload || [];
     });
 
     // student reducers
@@ -277,6 +326,24 @@ const adminSlice = createSlice({
     builder.addCase(getDashboardStats.fulfilled, (state, action) => {
       state.stats = action.payload;
     });
+
+    builder.addCase(approveProject.fulfilled, (state, action) => {
+      const projectId = action.payload;
+      state.projects = state.projects.map((project) =>
+        project._id === projectId
+          ? { ...project, status: "approved" }
+          : project,
+      );
+    });
+
+    builder.addCase(rejectProject.fulfilled, (state, action) => {
+      const projectId = action.payload;
+      state.projects = state.projects.map((project) =>
+        project._id === projectId
+          ? { ...project, status: "rejected" }
+          : project,
+      );
+    });
   },
 });
 
@@ -292,4 +359,7 @@ export {
   deleteTeacher,
   getDashboardStats,
   assignSupervisor,
+  approveProject,
+  rejectProject,
+  getProjectsBySupervisor,
 };

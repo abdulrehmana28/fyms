@@ -1,2 +1,9 @@
 .vercel
 .env*.local
+.zip
+.pptx
+.ppt
+.pdf
+.docx
+.doc
+

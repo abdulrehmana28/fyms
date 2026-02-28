@@ -11,6 +11,8 @@ import {
   getAllProjects,
   getAllDashboardStats,
   assignSupervisorToStudent,
+  getProject,
+  updateProjectStatus,
 } from "../controllers/admin.controllers.js";
 
 import { authMiddleware, authorized } from "../middlewares/auth.middleware.js";
@@ -98,5 +100,16 @@ router.post(
   authorized("Admin"),
   assignSupervisorToStudent,
 );
+
+// Route to update project status
+router.put(
+  "/project/:id",
+  authMiddleware,
+  authorized("Admin"),
+  updateProjectStatus,
+);
+
+// Route to get a specific project
+router.get("/project/:id", authMiddleware, authorized("Admin"), getProject);
 
 export default router;

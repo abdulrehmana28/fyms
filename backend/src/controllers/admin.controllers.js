@@ -257,7 +257,6 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
   //
 });
 
-
 const getAllDashboardStats = asyncHandler(async (req, res, next) => {
   const [
     totalStudents,
@@ -289,6 +288,67 @@ const getAllDashboardStats = asyncHandler(async (req, res, next) => {
   });
 });
 
+const getProject = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const project = await projectService.getProjectById(id);
+
+  if (!project) {
+    return next(new ErrorHandler("Project not found", 404));
+  }
+
+  const user = req.user;
+  const userRole = (user.role || "").toLowerCase();
+  const userId = user._id?.toString() || user.id;
+
+  const hasAccess =
+    userRole === "admin" ||
+    project.student._id.toString() === userId ||
+    (project.supervisor && project.supervisor._id.toString() === userId);
+
+  if (!hasAccess) {
+    return next(new ErrorHandler("Not authorized to fetch projects", 403));
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: { project },
+  });
+});
+
+const updateProjectStatus = asyncHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const updatedData = req.body;
+
+  const project = await projectService.getProjectById(id);
+
+  if (!project) {
+    return next(new ErrorHandler("Project not found", 404));
+  }
+
+  const user = req.user;
+  const userRole = (user.role || "").toLowerCase();
+  const userId = user._id?.toString() || user.id;
+
+  const hasAccess =
+    userRole === "admin" ||
+    project.student._id.toString() === userId ||
+    (project.supervisor && project.supervisor._id.toString() === userId);
+
+  if (!hasAccess) {
+    return next(
+      new ErrorHandler("Not authorized to update project status", 403),
+    );
+  }
+
+  const updatedProject = await projectService.updateProject(id, updatedData);
+
+  return res.status(200).json({
+    success: true,
+    data: { project: updatedProject },
+    message: "Project status updated successfully",
+  });
+});
+
 export {
   createStudent,
   updateStudent,
@@ -300,4 +360,6 @@ export {
   getAllProjects,
   getAllDashboardStats,
   assignSupervisorToStudent,
+  getProject,
+  updateProjectStatus,
 };

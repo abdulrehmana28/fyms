@@ -116,8 +116,22 @@ const addFeedback = async (projectId, supervisorId, type, title, message) => {
   return { project, latestFeedback };
 };
 
-const getProjectsBySupervisorId = async (supervisorId) => {
+const getProjectsBySupervisor = async (supervisorId) => {
   return await getAllProjects({ supervisor: supervisorId });
+};
+
+const updateProject = async (projectId, updateData) => {
+  const project = await Project.findByIdAndUpdate(projectId, updateData, {
+    new: true,
+    runValidators: true,
+  })
+    .populate("student", "name email")
+    .populate("supervisor", "name email");
+
+  if (!project) {
+    throw new ErrorHandler("Project not found", 404);
+  }
+  return project;
 };
 
 export {
@@ -128,5 +142,6 @@ export {
   getAllProjects,
   markComplete,
   addFeedback,
-  getProjectsBySupervisorId,
+  getProjectsBySupervisor,
+  updateProject,
 };
