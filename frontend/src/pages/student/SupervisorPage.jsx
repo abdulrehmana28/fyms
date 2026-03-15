@@ -200,13 +200,14 @@ const SupervisorPage = () => {
                     <div className="mt-1">
                       <span
                         className={`inline-flex items-center px-3 py-1 rounded-full font-medium capitalize text-sm ${
-                          project.status === "approved"
-                            ? "bg-green-100 text-green-800"
-                            : project.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : project.status === "rejected"
-                                ? "bg-red-100 text-red-800"
-                                : "bg-gray-100 text-gray-800"
+                          project.status === "Approved"
+                          ? "bg-green-100 text-green-800"
+                          : project.status === "Pending" ||
+                              project.status === "pending"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : project.status === "Rejected"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-gray-100 text-gray-800"
                         }`}
                       >
                         {project.status || "Invalid"}

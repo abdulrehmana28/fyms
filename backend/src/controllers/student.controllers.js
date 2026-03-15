@@ -13,7 +13,7 @@ import * as NotificationService from "../services/notification.services.js";
 import * as fileService from "../services/file.services.js";
 import { Project } from "../models/project.models.js";
 import { Notification } from "../models/notification.models.js";
-import { UserRoleEnums } from "../utils/constants.js";
+import { UserRoleEnums, ProjectStatusEnums } from "../utils/constants.js";
 
 const getStudentProjects = asyncHandler(async (req, res, next) => {
   const studentId = req.user._id;
@@ -45,7 +45,7 @@ const submitProposal = asyncHandler(async (req, res, next) => {
   const existingProject =
     await projectService.getProjectsByStudentId(studentId);
   // TODO: Use enum from utils/constants.js
-  if (existingProject && existingProject.status !== "Rejected") {
+  if (existingProject && existingProject.status !== ProjectStatusEnums.REJECTED) {
     return next(
       new ErrorHandler(
         "You have already submitted a project proposal. Please wait for the current proposal to be reviewed or contact support for further assistance.",
@@ -56,7 +56,7 @@ const submitProposal = asyncHandler(async (req, res, next) => {
 
   // If the existing project is rejected, delete it before creating a new one
   // Keep group intact — only the leader can resubmit
-  if (existingProject && existingProject.status === "Rejected") {
+  if (existingProject && existingProject.status === ProjectStatusEnums.REJECTED) {
     if (existingProject.createdBy.toString() !== studentId.toString()) {
       return next(
         new ErrorHandler(
@@ -74,7 +74,7 @@ const submitProposal = asyncHandler(async (req, res, next) => {
     // Clear project ref on all members
     await User.updateMany(
       { _id: { $in: existingMembers } },
-      { $set: { project: null } },
+      { $set: { project: null, supervisor: null } },
     );
   }
 

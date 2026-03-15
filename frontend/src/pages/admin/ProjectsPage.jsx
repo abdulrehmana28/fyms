@@ -133,9 +133,9 @@ const ProjectsPage = () => {
   };
 
   const handleStatusChange = async (projectId, newStatus) => {
-    if (newStatus === "approved") {
+    if (newStatus === "Approved") {
       dispatch(approveProject(projectId));
-    } else if (newStatus === "rejected") {
+    } else if (newStatus === "Rejected") {
       dispatch(rejectProject(projectId));
     }
   };
@@ -150,21 +150,21 @@ const ProjectsPage = () => {
     },
     {
       title: "Pending Review",
-      value: projects.filter((p) => p.status === "pending").length,
+      value: projects.filter((p) => p.status?.toLowerCase() === "pending").length,
       bg: "bg-orange-100",
       iconColor: "text-orange-600",
       Icon: AlertTriangle,
     },
     {
       title: "Completed",
-      value: projects.filter((p) => p.status === "completed").length,
+      value: projects.filter((p) => p.status?.toLowerCase() === "completed").length,
       bg: "bg-green-100",
       iconColor: "text-green-600",
       Icon: CheckCircle2,
     },
     {
       title: "Rejected",
-      value: projects.filter((p) => p.status === "rejected").length,
+      value: projects.filter((p) => p.status?.toLowerCase() === "rejected").length,
       bg: "bg-red-100",
       iconColor: "text-red-600",
       Icon: X,
@@ -379,12 +379,12 @@ const ProjectsPage = () => {
                         >
                           View
                         </button>
-                        {project.status === "pending" && (
+                        {project.status?.toLowerCase() === "pending" && (
                           <>
                             <button
                               className="btn-secondary"
                               onClick={() =>
-                                handleStatusChange(project._id, "approved")
+                                handleStatusChange(project._id, "Approved")
                               }
                             >
                               Approve
@@ -392,7 +392,7 @@ const ProjectsPage = () => {
                             <button
                               className="btn-danger"
                               onClick={() =>
-                                handleStatusChange(project._id, "rejected")
+                                handleStatusChange(project._id, "Rejected")
                               }
                             >
                               Reject

@@ -177,11 +177,11 @@ const getDashboardStats = createAsyncThunk(
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-          "Failed to fetch Admin Dashboard Stats",
+        "Failed to fetch Admin Dashboard Stats",
       );
       return thunkAPI.rejectWithValue(
         error.response?.data?.message ||
-          "Failed to fetch Admin Dashboard Stats",
+        "Failed to fetch Admin Dashboard Stats",
       );
     }
   },
@@ -216,7 +216,7 @@ const approveProject = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const response = await axiosInstance.put(`/admin/project/${id}`, {
-        status: "approved",
+        status: "Approved",
       });
       toast.success(response.data.message || "Project approved successfully");
       return id;
@@ -232,7 +232,7 @@ const rejectProject = createAsyncThunk(
   async (id, thunkAPI) => {
     try {
       const response = await axiosInstance.put(`/admin/project/${id}`, {
-        status: "rejected",
+        status: "Rejected",
       });
       toast.success(response.data.message || "Project rejected successfully");
       return id;
@@ -358,7 +358,7 @@ const adminSlice = createSlice({
       const projectId = action.payload;
       state.projects = state.projects.map((project) =>
         project._id === projectId
-          ? { ...project, status: "approved" }
+          ? { ...project, status: "Approved" }
           : project,
       );
     });
@@ -367,7 +367,7 @@ const adminSlice = createSlice({
       const projectId = action.payload;
       state.projects = state.projects.map((project) =>
         project._id === projectId
-          ? { ...project, status: "rejected" }
+          ? { ...project, status: "Rejected" }
           : project,
       );
     });
@@ -391,3 +391,4 @@ export {
   getProjectsBySupervisor,
   addMemberToProject,
 };
+

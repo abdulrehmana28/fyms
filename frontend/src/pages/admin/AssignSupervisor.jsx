@@ -75,7 +75,7 @@ const AssignSupervisor = () => {
           updatedAt: project.updatedAt
             ? new Date(project.updatedAt).toLocaleString()
             : "N/A",
-          isApproved: project.status === "approved",
+          isApproved: project.status === "Approved",
         };
       });
   }, [projects]);
@@ -468,3 +468,5 @@ const AssignSupervisor = () => {
 };
 
 export default AssignSupervisor;
+
+
