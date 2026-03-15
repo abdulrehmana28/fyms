@@ -47,9 +47,13 @@ const ProjectsPage = () => {
   }, [projects]);
 
   const filteredProjects = projects?.filter((project) => {
+    const memberNames = (project.members || [])
+      .map((m) => (typeof m === "object" ? m.name : "") || "")
+      .join(" ");
     const matchesSearch =
       (project.title || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (project.student?.name || "")
+      memberNames.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (project.createdBy?.name || "")
         .toLowerCase()
         .includes(searchTerm.toLowerCase());
 
@@ -65,14 +69,19 @@ const ProjectsPage = () => {
 
   const files = useMemo(() => {
     return (projects || []).flatMap((p) =>
-      (p.files || []).map((f) => ({
-        projectId: p._id,
-        fileId: f._id,
-        originalName: f.originalName,
-        uploadedAt: f.uploadedAt,
-        projectTitle: p.title,
-        studentName: p.student?.name,
-      })),
+      (p.files || []).map((f) => {
+        const memberNames = (p.members || [])
+          .map((m) => (typeof m === "object" ? m.name : "Unknown"))
+          .join(", ");
+        return {
+          projectId: p._id,
+          fileId: f._id,
+          originalName: f.originalName,
+          uploadedAt: f.uploadedAt,
+          projectTitle: p.title,
+          studentName: memberNames || p.createdBy?.name || "Unknown",
+        };
+      }),
     );
   }, [projects]);
 
@@ -273,7 +282,7 @@ const ProjectsPage = () => {
                     Project Details
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    Student
+                    Members
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Supervisor
@@ -308,13 +317,17 @@ const ProjectsPage = () => {
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap">
                       <div className="text-sm font-medium text-slate-900">
-                        {project?.student?.name}
+                        {(project?.members || [])
+                          .map((m) =>
+                            typeof m === "object" ? m.name : "Unknown",
+                          )
+                          .join(", ") ||
+                          project?.createdBy?.name ||
+                          "N/A"}
                       </div>
                       <div className="text-xs text-slate-500">
-                        Last Update:{" "}
-                        {project?.updatedAt
-                          ? new Date(project?.updatedAt).toLocaleDateString()
-                          : "N/A"}
+                        {(project?.members || []).length}/
+                        {project?.maxMembers || 2} members
                       </div>
                     </td>
                     <td className="px-6 py-3 whitespace-nowrap">
@@ -350,14 +363,15 @@ const ProjectsPage = () => {
                       <div className="flex space-x-2">
                         <button
                           onClick={async () => {
-                            const res = await dispatch(
-                              getProject(project._id),
-                            );
-                            if (!getProject.fulfilled.match(res))
-                              return;
+                            const res = await dispatch(getProject(project._id));
+                            if (!getProject.fulfilled.match(res)) return;
                             // handle various nested structures (data.project, data, project, or root)
                             const payload = res.payload;
-                            const detail = payload?.data?.project || payload?.project || payload?.data || payload;
+                            const detail =
+                              payload?.data?.project ||
+                              payload?.project ||
+                              payload?.data ||
+                              payload;
                             setCurrentProject(detail);
                             setShowViewModal(true);
                           }}
@@ -430,9 +444,15 @@ const ProjectsPage = () => {
                 </div>
                 <div className="grid grid-cols-1 md:grid-col-2 gap-4">
                   <div>
-                    <label className="label">Student</label>
+                    <label className="label">Members</label>
                     <div className="input bg-slate-50">
-                      {currentProject?.student?.name || "-"}
+                      {(currentProject?.members || [])
+                        .map((m) =>
+                          typeof m === "object" ? m.name : "Unknown",
+                        )
+                        .join(", ") ||
+                        currentProject?.createdBy?.name ||
+                        "-"}
                     </div>
                   </div>
 

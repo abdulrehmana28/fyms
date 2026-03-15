@@ -64,12 +64,13 @@ const getRequests = asyncHandler(async (req, res, next) => {
   let latestProjectsMap = {};
 
   if (studentIds.length > 0) {
+    // Group-aware: search by members array instead of old singular student field
     const projects = await Project.aggregate([
-      { $match: { student: { $in: studentIds } } },
+      { $match: { members: { $in: studentIds } } },
       { $sort: { createdAt: -1 } },
       {
         $group: {
-          _id: "$student",
+          _id: "$createdBy",
           latestProject: { $first: "$$ROOT" },
         },
       },
@@ -117,25 +118,36 @@ const acceptRequest = asyncHandler(async (req, res, next) => {
 
   const { request, project } = result;
 
-  await notificationService.notifyUser(
-    request.student._id,
-    `${request.student.name}'s request has been accepted by ${req.user.name}.`,
-    "Success",
-    "/students/status",
-    "High",
-  );
+  // Notify all group members about the acceptance
+  if (project) {
+    await notificationService.notifyProjectMembers(
+      project._id,
+      `Supervisor request has been accepted by ${req.user.name}.`,
+      "Success",
+      "/students/status",
+      "High",
+    );
+  } else {
+    await notificationService.notifyUser(
+      request.student._id,
+      `${request.student.name}'s request has been accepted by ${req.user.name}.`,
+      "Success",
+      "/students/status",
+      "High",
+    );
+  }
 
   const student = await User.findById(request.student._id);
   if (!student) {
     return next(new ErrorHandler("Student not found", 404));
   }
   const studentEmail = student.email;
-  const message = generateRequestAcceptanceTemplate(req.user.name);
+  const emailMessage = generateRequestAcceptanceTemplate(req.user.name);
 
   await sendEmail({
     to: studentEmail,
     subject: "CapTrak - Request Accepted",
-    message,
+    message: emailMessage,
   });
 
   res.status(200).json({
@@ -189,16 +201,26 @@ const rejectRequest = asyncHandler(async (req, res, next) => {
 
 const getAssignedStudents = asyncHandler(async (req, res, next) => {
   const supervisorId = req.user._id;
+
+  // Return projects (with full member list) instead of flat user list
+  // to avoid duplicates when multiple members share the same project.
+  const projects = await Project.find({ supervisor: supervisorId })
+    .populate("members", "name email department")
+    .populate("createdBy", "name email")
+    .populate("supervisor", "name email")
+    .sort({ createdAt: -1 });
+
+  // Also return individual students for backward compat with some UI sections
   const students = await User.find({ supervisor: supervisorId })
     .populate("project")
     .sort({ createdAt: -1 });
 
-  const total = await User.countDocuments({ supervisor: supervisorId });
+  const total = projects.length;
 
   res.status(200).json({
     success: true,
     message: "Assigned students fetched successfully",
-    data: { students, total },
+    data: { students, projects, total },
   });
 });
 
@@ -219,9 +241,10 @@ const markProjectAsCompleted = asyncHandler(async (req, res, next) => {
 
   const updatedProject = await projectService.markComplete(projectId);
 
-  await notificationService.notifyUser(
-    project.student._id,
-    `${project.student.name}'s project "${project.title}" has been marked as completed by ${req.user.name}.`,
+  // Notify all group members
+  await notificationService.notifyProjectMembers(
+    projectId,
+    `Project "${project.title}" has been marked as completed by ${req.user.name}.`,
     "Success",
     "/students/status",
     "Low",
@@ -269,9 +292,10 @@ const addFeedbackToProject = asyncHandler(async (req, res, next) => {
       message,
     );
 
-  await notificationService.notifyUser(
-    project.student._id,
-    `${project.student.name}'s project "${project.title}" has received new feedback from ${req.user.name}.`,
+  // Notify all group members
+  await notificationService.notifyProjectMembers(
+    projectId,
+    `Project "${project.title}" has received new feedback from ${req.user.name}.`,
     "Feedback",
     "/students/feedback",
     "Low",
@@ -293,8 +317,12 @@ const getStudentProjectFiles = asyncHandler(async (req, res, next) => {
       ...(file.toObject ? file.toObject() : file),
       projectId: project._id,
       projectTitle: project.title,
-      studentName: project.student?.name || "N/A",
-      studentEmail: project.student?.email || "N/A",
+      studentName:
+        (project.members || []).map((m) => m?.name || "N/A").join(", ") ||
+        "N/A",
+      studentEmail:
+        (project.members || []).map((m) => m?.email || "N/A").join(", ") ||
+        "N/A",
     })),
   );
 

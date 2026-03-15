@@ -29,10 +29,19 @@ const feedbackSchema = new mongoose.Schema(
 
 const projectSchema = new mongoose.Schema(
   {
-    student: {
+    // Group members — replaces the old singular `student` field.
+    // The first element is always the project creator (leader).
+    members: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    // Immutable reference to the student who created the project / group leader.
+    createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: [true, "Student reference is required"],
+      required: [true, "Project creator reference is required"],
     },
     supervisor: {
       type: mongoose.Schema.Types.ObjectId,
@@ -56,6 +65,20 @@ const projectSchema = new mongoose.Schema(
       type: String,
       enum: ["Pending", "Approved", "Rejected", "In Progress", "Completed"],
       default: "Pending",
+    },
+    // --- Group / Invite fields ---
+    inviteCode: {
+      type: String,
+      default: null,
+    },
+    inviteCodeExpiresAt: {
+      type: Date,
+      default: null,
+    },
+    maxMembers: {
+      type: Number,
+      default: 2,
+      min: [1, "A project must have at least 1 member"],
     },
     files: [
       {
@@ -90,8 +113,10 @@ const projectSchema = new mongoose.Schema(
 );
 
 // Indexes for optimizing queries
-projectSchema.index({ student: 1 });
+projectSchema.index({ members: 1 });
+projectSchema.index({ createdBy: 1 });
 projectSchema.index({ supervisor: 1 });
+projectSchema.index({ inviteCode: 1 });
 projectSchema.index({ status: 1 });
 projectSchema.index({ createdAt: -1 });
 

@@ -13,6 +13,7 @@ import {
   assignSupervisorToStudent,
   getProject,
   updateProjectStatus,
+  addMemberToProject,
 } from "../controllers/admin.controllers.js";
 
 import { authMiddleware, authorized } from "../middlewares/auth.middleware.js";
@@ -111,5 +112,13 @@ router.put(
 
 // Route to get a specific project
 router.get("/project/:id", authMiddleware, authorized("Admin"), getProject);
+
+// Route to add a member to a project group (admin override)
+router.post(
+  "/project/:projectId/add-member",
+  authMiddleware,
+  authorized("Admin"),
+  addMemberToProject,
+);
 
 export default router;

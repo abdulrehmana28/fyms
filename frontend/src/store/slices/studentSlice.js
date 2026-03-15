@@ -46,7 +46,6 @@ const getSupervisor = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const response = await axiosInstance.get("/student/supervisor");
-      console.log(response);
       return (
         response?.data?.data?.supervisor ||
         response?.data?.data ||
@@ -76,7 +75,7 @@ const fetchAvailableSupervisors = createAsyncThunk(
     } catch (error) {
       toast.error(
         error.response?.data?.message ||
-        "Failed to fetch available supervisors.",
+          "Failed to fetch available supervisors.",
       );
       return thunkAPI.rejectWithValue(
         error.response?.data.message || "Network Error",
@@ -201,6 +200,44 @@ const downloadProjectFiles = createAsyncThunk(
   },
 );
 
+// --- Group / Invite thunks ---
+
+const generateInviteCode = createAsyncThunk(
+  "student/generateInviteCode",
+  async (_, thunkAPI) => {
+    try {
+      const response = await axiosInstance.post("/student/group/invite");
+      toast.success("Invite code generated!");
+      return response.data.data;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to generate invite code.",
+      );
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Network Error",
+      );
+    }
+  },
+);
+
+const joinGroup = createAsyncThunk(
+  "student/joinGroup",
+  async (inviteCode, thunkAPI) => {
+    try {
+      const response = await axiosInstance.post("/student/group/join", {
+        inviteCode,
+      });
+      toast.success("Successfully joined the group!");
+      return response.data.data?.project || response.data.data || response.data;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to join group.");
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Network Error",
+      );
+    }
+  },
+);
+
 const studentSlice = createSlice({
   name: "student",
   initialState: {
@@ -212,6 +249,10 @@ const studentSlice = createSlice({
     deadlines: [],
     feedback: [],
     status: null,
+    // Group-related state
+    inviteCode: null,
+    inviteCodeExpiresAt: null,
+    groupMembers: [],
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -220,8 +261,11 @@ const studentSlice = createSlice({
     });
 
     builder.addCase(fetchProject.fulfilled, (state, action) => {
-      state.project = action.payload?.project || action.payload || null;
-      state.files = action.payload?.files || [];
+      const project = action.payload?.project || action.payload || null;
+      state.project = project;
+      state.files = project?.files || action.payload?.files || [];
+      // Extract group data from the project
+      state.groupMembers = project?.members || [];
     });
 
     builder.addCase(getSupervisor.fulfilled, (state, action) => {
@@ -239,9 +283,25 @@ const studentSlice = createSlice({
     });
     builder.addCase(fetchDashboardStats.fulfilled, (state, action) => {
       state.dashboardStats = action.payload || [];
+      // Also extract group members from dashboard stats project
+      const project = action.payload?.project;
+      if (project?.members) {
+        state.groupMembers = project.members;
+      }
     });
     builder.addCase(getFeedback.fulfilled, (state, action) => {
       state.feedback = action.payload?.feedback || action.payload || [];
+    });
+
+    // Group / Invite reducers
+    builder.addCase(generateInviteCode.fulfilled, (state, action) => {
+      state.inviteCode = action.payload?.inviteCode || null;
+      state.inviteCodeExpiresAt = action.payload?.expiresAt || null;
+    });
+    builder.addCase(joinGroup.fulfilled, (state, action) => {
+      const project = action.payload?.project || action.payload;
+      state.project = project;
+      state.groupMembers = project?.members || [];
     });
   },
 });
@@ -257,4 +317,6 @@ export {
   fetchDashboardStats,
   getFeedback,
   downloadProjectFiles,
+  generateInviteCode,
+  joinGroup,
 };

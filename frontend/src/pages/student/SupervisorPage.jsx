@@ -1,19 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import authUser from "../../store/slices/authSlice";
 import {
   fetchAvailableSupervisors,
   fetchProject,
   getSupervisor,
   requestSupervisor,
 } from "../../store/slices/studentSlice";
-import { X } from "lucide-react";
+import { X, Users } from "lucide-react";
 
 const SupervisorPage = () => {
   const dispatch = useDispatch();
   const { supervisors, supervisor, project } = useSelector(
     (state) => state.student,
   );
+  const { authUser } = useSelector((state) => state.auth);
 
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [requestMessage, setRequestMessage] = useState("");
@@ -33,6 +33,15 @@ const SupervisorPage = () => {
   );
 
   const hasProject = useMemo(() => !!(project && project._id), [project]);
+
+  const isLeader = useMemo(
+    () =>
+      project?.createdBy?._id === authUser?._id ||
+      project?.createdBy === authUser?._id,
+    [project, authUser],
+  );
+
+  const groupMembers = project?.members || [];
 
   // Don't Try to understand this function. Copy-Pasted from StackOverflow
   // It just formats date to 1st January 2024 format
@@ -241,6 +250,47 @@ const SupervisorPage = () => {
                   </p>
                 </div>
               )}
+
+              {/* Group Members */}
+              {groupMembers.length > 0 && (
+                <div>
+                  <label className="text-sm font-medium text-slate-500 uppercase tracking-wide flex items-center gap-1">
+                    <Users className="h-4 w-4" /> Group Members (
+                    {groupMembers.length}/{project?.maxMembers || 2})
+                  </label>
+                  <div className="mt-2 space-y-2">
+                    {groupMembers.map((member) => {
+                      const m =
+                        typeof member === "object"
+                          ? member
+                          : { _id: member, name: "Loading..." };
+                      const isMemberLeader =
+                        project?.createdBy?._id === m._id ||
+                        project?.createdBy === m._id;
+                      return (
+                        <div
+                          key={m._id}
+                          className="flex items-center justify-between p-2 bg-slate-50 rounded-lg"
+                        >
+                          <div>
+                            <span className="font-medium text-slate-800">
+                              {m.name || "Unknown"}
+                            </span>
+                            <span className="text-sm text-slate-500 ml-2">
+                              {m.email || ""}
+                            </span>
+                          </div>
+                          {isMemberLeader && (
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                              Leader
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -260,8 +310,20 @@ const SupervisorPage = () => {
           </div>
         )}
 
-        {/* Available Supervisors - Only show if no supervisor assigned */}
-        {hasProject && !hasSupervisor && (
+        {/* Notice for non-leader members */}
+        {hasProject && !hasSupervisor && !isLeader && (
+          <div className="card">
+            <div className="p-6 text-center">
+              <p className="text-slate-600">
+                Only the group leader can request a supervisor. Please wait for
+                your group leader to send a request.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Available Supervisors - Only show if no supervisor assigned AND user is leader */}
+        {hasProject && !hasSupervisor && isLeader && (
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">Available Supervisors</h2>

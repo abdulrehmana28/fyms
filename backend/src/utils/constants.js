@@ -29,3 +29,17 @@ export const NotificationPriorityEnums = {
 export const AvailableNotificationPriorities = Object.values(
   NotificationPriorityEnums,
 );
+
+export const ProjectStatusEnums = {
+  PENDING: "Pending",
+  APPROVED: "Approved",
+  REJECTED: "Rejected",
+  IN_PROGRESS: "In Progress",
+  COMPLETED: "Completed",
+};
+
+export const AvailableProjectStatuses = Object.values(ProjectStatusEnums);
+
+// Group defaults
+export const DEFAULT_GROUP_SIZE = 2;
+export const INVITE_CODE_EXPIRY_HOURS = 48;

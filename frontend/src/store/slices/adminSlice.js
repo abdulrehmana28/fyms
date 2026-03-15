@@ -260,6 +260,27 @@ const getProjectsBySupervisor = createAsyncThunk(
   },
 );
 
+const addMemberToProject = createAsyncThunk(
+  "admin/addMemberToProject",
+  async ({ projectId, studentId }, thunkAPI) => {
+    try {
+      const response = await axiosInstance.post(
+        `/admin/project/${projectId}/add-member`,
+        { studentId },
+      );
+      toast.success(response.data.message || "Member added successfully");
+      return response.data.data;
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to add member to project",
+      );
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || "Failed to add member to project",
+      );
+    }
+  },
+);
+
 const adminSlice = createSlice({
   name: "admin",
   initialState: {
@@ -368,4 +389,5 @@ export {
   approveProject,
   rejectProject,
   getProjectsBySupervisor,
+  addMemberToProject,
 };

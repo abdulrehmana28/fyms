@@ -28,7 +28,7 @@ const downloadProjectFiles = asyncHandler(async (req, res, next) => {
     userRole === "admin" ||
     (userRole === "supervisor" &&
       project.supervisor._id.toString() === userId) ||
-    (userRole === "student" && project.student._id.toString() === userId);
+    (userRole === "student" && projectService.isProjectMember(project, userId));
 
   if (!hasAccess) {
     return next(

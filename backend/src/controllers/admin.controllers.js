@@ -163,7 +163,6 @@ const deleteSupervisor = asyncHandler(async (req, res, next) => {
 
 const getAllUsers = asyncHandler(async (req, res, next) => {
   const users = await userService.getAllUsers();
-  console.log(users);
   res.status(200).json({
     success: true,
     message: "Users retrieved successfully",
@@ -185,12 +184,12 @@ const getAllProjects = asyncHandler(async (req, res, next) => {
 // Admin Dashboard Controllers
 
 const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
-  const { studentId, supervisorId } = req.body;
+  const { studentId, supervisorId, projectId } = req.body;
 
-  if (!studentId || !supervisorId) {
+  if ((!studentId && !projectId) || !supervisorId) {
     return next(
       new ErrorHandler(
-        "Both studentId and supervisorId are required to assign a supervisor.",
+        "supervisorId and either studentId or projectId are required to assign a supervisor.",
         400,
       ),
     );
@@ -210,18 +209,24 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const project = await Project.findOne({ student: studentId });
+  // Look up the project by projectId or by the student's membership
+  let project;
+  if (projectId) {
+    project = await Project.findById(projectId);
+  } else {
+    project = await Project.findOne({ members: studentId });
+  }
 
   if (!project) {
     return next(
-      new ErrorHandler("No project found for the given studentId.", 404),
+      new ErrorHandler("No project found for the given student/project.", 404),
     );
   }
 
   if (project.supervisor !== null) {
     return next(
       new ErrorHandler(
-        "Supervisor has already been assigned to this student.",
+        "Supervisor has already been assigned to this project.",
         400,
       ),
     );
@@ -236,36 +241,31 @@ const assignSupervisorToStudent = asyncHandler(async (req, res, next) => {
     );
   }
 
-  const { student, supervisor } = await userService.assignSupervisorDirectly(
-    studentId,
-    supervisorId,
-  );
+  // Use group-aware assignment
+  const { project: updatedProject, supervisor } =
+    await userService.assignSupervisorToProject(project._id, supervisorId);
 
-  project.supervisor = supervisor;
-  await project.save();
-
-  await NotificationService.notifyUser(
-    supervisorId,
-    `${supervisor.name} has been assigned as supervisor for a student's project.`,
-    "Success",
-    "/supervisor/students",
-    "High",
-  );
-  await NotificationService.notifyUser(
-    studentId,
-    `${supervisor.name} has been assigned as your supervisor.`,
+  await NotificationService.notifyProjectMembers(
+    project._id,
+    `${supervisor.name} has been assigned as supervisor for your project.`,
     "Success",
     "/student/status",
     "High",
   );
 
+  await NotificationService.notifyUser(
+    supervisorId,
+    `${supervisor.name} has been assigned as supervisor for a project.`,
+    "Success",
+    "/supervisor/students",
+    "High",
+  );
+
   res.status(200).json({
     success: true,
-    data: { student, supervisor },
+    data: { project: updatedProject, supervisor },
     message: "Supervisor assigned successfully",
   });
-
-  //
 });
 
 const getAllDashboardStats = asyncHandler(async (req, res, next) => {
@@ -313,7 +313,8 @@ const getProject = asyncHandler(async (req, res, next) => {
 
   const hasAccess =
     userRole === "admin" ||
-    project.student._id.toString() === userId ||
+    project.createdBy._id.toString() === userId ||
+    project.members.some((m) => (m._id || m).toString() === userId) ||
     (project.supervisor && project.supervisor._id.toString() === userId);
 
   if (!hasAccess) {
@@ -342,7 +343,8 @@ const updateProjectStatus = asyncHandler(async (req, res, next) => {
 
   const hasAccess =
     userRole === "admin" ||
-    project.student._id.toString() === userId ||
+    project.createdBy._id.toString() === userId ||
+    project.members.some((m) => (m._id || m).toString() === userId) ||
     (project.supervisor && project.supervisor._id.toString() === userId);
 
   if (!hasAccess) {
@@ -360,6 +362,50 @@ const updateProjectStatus = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Admin override — add a student to a project group, bypassing maxMembers
+const addMemberToProject = asyncHandler(async (req, res, next) => {
+  const { projectId } = req.params;
+  const { studentId } = req.body;
+
+  if (!studentId) {
+    return next(new ErrorHandler("studentId is required", 400));
+  }
+
+  const student = await User.findById(studentId);
+  if (!student || student.role !== "Student") {
+    return next(new ErrorHandler("Invalid student ID", 400));
+  }
+
+  const project = await projectService.addMemberToProject(projectId, studentId);
+
+  await project.populate("members", "name email");
+  await project.populate("createdBy", "name email");
+
+  // Notify the new member
+  await NotificationService.notifyUser(
+    studentId,
+    `You have been added to the project "${project.title}" by an administrator.`,
+    "Success",
+    "/student/dashboard",
+    "High",
+  );
+
+  // Notify existing members
+  await NotificationService.notifyProjectMembers(
+    project._id,
+    `${student.name} has been added to your group by an administrator.`,
+    "Info",
+    "/student/dashboard",
+    "Medium",
+  );
+
+  res.status(200).json({
+    success: true,
+    data: { project },
+    message: "Member added to project successfully",
+  });
+});
+
 export {
   createStudent,
   updateStudent,
@@ -373,4 +419,5 @@ export {
   assignSupervisorToStudent,
   getProject,
   updateProjectStatus,
+  addMemberToProject,
 };

@@ -127,7 +127,8 @@ const getAssignedStudents = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const res = await axiosInstance.get(`/supervisor/assigned-students`);
-      return res.data.data?.students || res.data.data || res.data;
+      // Backend now returns { students, projects }
+      return res.data.data || res.data;
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to fetch assigned students",
@@ -182,6 +183,7 @@ const supervisorSlice = createSlice({
   name: "supervisor",
   initialState: {
     assignedStudents: [],
+    assignedProjects: [],
     files: [],
     pendingRequests: [],
     dashboardStats: null,
@@ -197,7 +199,13 @@ const supervisorSlice = createSlice({
     });
     builder.addCase(getAssignedStudents.fulfilled, (state, action) => {
       state.loading = false;
-      state.assignedStudents = action.payload?.students || action.payload || [];
+      // payload is { students, projects } or just an array (backward compat)
+      if (Array.isArray(action.payload)) {
+        state.assignedStudents = action.payload;
+      } else {
+        state.assignedStudents = action.payload?.students || [];
+        state.assignedProjects = action.payload?.projects || [];
+      }
     });
     builder.addCase(getAssignedStudents.rejected, (state, action) => {
       state.error = action.payload || "Failed to fetch assigned students";

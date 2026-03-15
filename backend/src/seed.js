@@ -79,13 +79,15 @@ const seedData = async () => {
 
     console.log("Creating Projects...");
 
-    // Project for Student 1 (Approved, with Supervisor)
+    // Project for Student 1 & Student 2 (group of 2, Approved, with Supervisor)
     const project1 = await Project.create({
-      student: student1._id,
+      createdBy: student1._id,
+      members: [student1._id, student2._id],
       supervisor: supervisor1._id,
       title: "Automated Dino Feeding System",
       description: "A system to automate the feeding of dinosaurs in the park.",
       status: "Approved",
+      maxMembers: 2,
       feedback: [
         {
           supervisorId: supervisor1._id,
@@ -96,24 +98,31 @@ const seedData = async () => {
       ],
     });
 
-    // Update Student 1 and Supervisor 1 with project association
+    // Update Students 1 & 2, and Supervisor 1 with project association
     student1.project = project1._id;
     student1.supervisor = supervisor1._id;
     await student1.save();
 
+    student2.project = project1._id;
+    student2.supervisor = supervisor1._id;
+    await student2.save();
+
+    // Only the leader (createdBy) is pushed to assignedStudents for capacity counting
     supervisor1.assignedStudents.push(student1._id);
     await supervisor1.save();
 
-    // Project for Student 2 (Pending)
+    // Project for Student 3 (solo, Pending — no partner yet)
     const project2 = await Project.create({
-      student: student2._id,
+      createdBy: student3._id,
+      members: [student3._id],
       title: "Unix System Interface",
       description: "A 3D file system navigator.",
       status: "Pending",
+      maxMembers: 2,
     });
 
-    student2.project = project2._id;
-    await student2.save();
+    student3.project = project2._id;
+    await student3.save();
 
     console.log("Creating Deadlines...");
 

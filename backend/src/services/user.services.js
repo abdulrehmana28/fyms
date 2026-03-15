@@ -1,4 +1,5 @@
 import { User } from "../models/user.models.js";
+import { Project } from "../models/project.models.js";
 
 const createUser = async (userData) => {
   try {
@@ -52,14 +53,17 @@ const getAllUsers = async () => {
       .select("-password -resetPasswordToken -resetPasswordExpire")
       .sort({ createdAt: -1 });
 
-    //   console.log(users);
-
     return users;
   } catch (error) {
     throw new Error(`Error retrieving users: ${error.message}`);
   }
 };
 
+/**
+ * Legacy helper kept for backwards-compatibility.
+ * Assigns a supervisor to a single student — used by the old 1:1 flow.
+ * Prefer assignSupervisorToProject for group-aware assignment.
+ */
 const assignSupervisorDirectly = async (studentId, supervisorId) => {
   const student = await User.findOne({ _id: studentId, role: "Student" });
   const supervisor = await User.findOne({
@@ -82,6 +86,50 @@ const assignSupervisorDirectly = async (studentId, supervisorId) => {
   return { student, supervisor };
 };
 
+/**
+ * Group-aware supervisor assignment.
+ * Sets the supervisor on the Project, on every member User, and pushes only
+ * the project's createdBy to Supervisor.assignedStudents (for capacity
+ * counting — 1 group = 1 slot).
+ */
+const assignSupervisorToProject = async (projectId, supervisorId) => {
+  const project = await Project.findById(projectId);
+  if (!project) throw new Error("Project not found");
+
+  const supervisor = await User.findOne({
+    _id: supervisorId,
+    role: "Supervisor",
+  });
+  if (!supervisor) throw new Error("Supervisor not found");
+
+  if (!supervisor.hasCapacity()) {
+    throw new Error("Supervisor has reached maximum student capacity");
+  }
+
+  // Set supervisor on project
+  project.supervisor = supervisorId;
+  project.status = "Approved";
+  await project.save();
+
+  // Set supervisor on every group member
+  await User.updateMany(
+    { _id: { $in: project.members } },
+    { $set: { supervisor: supervisorId } },
+  );
+
+  // For capacity counting, push only the project leader (createdBy)
+  if (
+    !supervisor.assignedStudents.some(
+      (id) => id.toString() === project.createdBy.toString(),
+    )
+  ) {
+    supervisor.assignedStudents.push(project.createdBy);
+    await supervisor.save();
+  }
+
+  return { project, supervisor };
+};
+
 export {
   createUser,
   updateUser,
@@ -89,4 +137,5 @@ export {
   deleteUser,
   getAllUsers,
   assignSupervisorDirectly,
+  assignSupervisorToProject,
 };

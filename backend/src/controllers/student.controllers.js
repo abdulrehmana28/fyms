@@ -27,6 +27,10 @@ const getStudentProjects = asyncHandler(async (req, res, next) => {
     });
   }
 
+  // Populate members for the response
+  await project.populate("members", "name email");
+  await project.populate("createdBy", "name email");
+
   res.status(200).json({
     success: true,
     data: { project },
@@ -51,12 +55,32 @@ const submitProposal = asyncHandler(async (req, res, next) => {
   }
 
   // If the existing project is rejected, delete it before creating a new one
+  // Keep group intact — only the leader can resubmit
   if (existingProject && existingProject.status === "Rejected") {
+    if (existingProject.createdBy.toString() !== studentId.toString()) {
+      return next(
+        new ErrorHandler(
+          "Only the group leader can resubmit a rejected proposal",
+          403,
+        ),
+      );
+    }
+    // Preserve group members for the new project
+    const existingMembers = existingProject.members.map((m) =>
+      (m._id || m).toString(),
+    );
     await Project.findByIdAndDelete(existingProject._id);
+
+    // Clear project ref on all members
+    await User.updateMany(
+      { _id: { $in: existingMembers } },
+      { $set: { project: null } },
+    );
   }
 
   const projectData = {
-    student: studentId,
+    createdBy: studentId,
+    members: [studentId],
     title,
     description,
   };
@@ -87,7 +111,7 @@ const uploadProjectFiles = asyncHandler(async (req, res, next) => {
   const studentId = req.user._id;
   const project = await projectService.getProjectById(projectId);
 
-  if (!project || project.student?._id.toString() !== studentId.toString()) {
+  if (!project || !projectService.isProjectMember(project, studentId)) {
     return next(
       new ErrorHandler(
         "Project not found or you do not have permission to upload files to this project",
@@ -156,6 +180,19 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
     );
   }
 
+  // Only the group leader can request a supervisor
+  const project = await projectService.getProjectsByStudentId(studentId);
+  if (project && project.createdBy.toString() !== studentId.toString()) {
+    return next(
+      new ErrorHandler("Only the group leader can request a supervisor", 403),
+    );
+  }
+
+  // Populate members for group context
+  if (project) {
+    await project.populate("members", "name");
+  }
+
   const supervisor = await User.findById(supervisorId);
   if (!supervisor || supervisor.role !== UserRoleEnums.SUPERVISOR) {
     return next(new ErrorHandler("Invalid supervisor selected", 404));
@@ -167,17 +204,21 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
     );
   }
 
+  const memberNames =
+    project?.members?.map((m) => m.name).join(", ") || student.name;
+  const groupInfo = `(Group: ${memberNames})`;
+
   const requestData = {
     student: studentId,
     supervisor: supervisorId,
-    message,
+    message: `${groupInfo} ${message || ""}`.trim().substring(0, 250),
   };
 
   const request = await requestService.createRequest(requestData);
 
   await NotificationService.notifyUser(
     supervisorId,
-    `${student.name} has requested ${supervisor.name} to be their supervisor.`,
+    `${student.name} ${groupInfo} has requested ${supervisor.name} to be their supervisor.`,
     "Request",
     "supervisor/requests",
     "Medium",
@@ -192,17 +233,19 @@ const requestSupervisor = asyncHandler(async (req, res, next) => {
 
 const getDashBoardStats = asyncHandler(async (req, res, next) => {
   const studentId = req.user._id;
-  const project = await Project.findOne({ student: studentId })
+  const project = await Project.findOne({ members: studentId })
     .sort({
       createdAt: -1,
     })
     .populate("supervisor", "name")
+    .populate("members", "name email")
+    .populate("createdBy", "name email")
     .lean();
 
   const presentDate = new Date();
 
   const upcomingDeadlines = await Project.find({
-    student: studentId,
+    members: studentId,
     deadlines: { $gte: presentDate },
   })
     .select("title description")
@@ -247,7 +290,7 @@ const getFeedback = asyncHandler(async (req, res, next) => {
   const studentId = req.user._id;
   const project = await projectService.getProjectById(projectId);
 
-  if (!project || project.student._id.toString() !== studentId.toString()) {
+  if (!project || !projectService.isProjectMember(project, studentId)) {
     return next(
       new ErrorHandler(
         "Project not found or you do not have permission to view feedback for this project",
@@ -289,7 +332,7 @@ const downloadProjectFiles = asyncHandler(async (req, res, next) => {
   const studentId = req.user._id;
   const project = await projectService.getProjectById(projectId);
 
-  if (!project || project.student._id.toString() !== studentId.toString()) {
+  if (!project || !projectService.isProjectMember(project, studentId)) {
     return next(
       new ErrorHandler(
         "Project not found or you do not have permission to download files from this project",
@@ -306,6 +349,60 @@ const downloadProjectFiles = asyncHandler(async (req, res, next) => {
   fileService.streamDownload(file.fileUrl, res, file.originalName);
 });
 
+// --------------- Group / Invite endpoints ---------------
+
+const generateInviteCode = asyncHandler(async (req, res, next) => {
+  const studentId = req.user._id;
+  const project = await projectService.getProjectsByStudentId(studentId);
+
+  if (!project) {
+    return next(new ErrorHandler("You must have a project first", 400));
+  }
+
+  const result = await projectService.generateInviteCode(
+    project._id,
+    studentId,
+  );
+
+  res.status(200).json({
+    success: true,
+    data: result,
+    message: "Invite code generated successfully",
+  });
+});
+
+const joinGroup = asyncHandler(async (req, res, next) => {
+  const { inviteCode } = req.body;
+  const studentId = req.user._id;
+
+  if (!inviteCode) {
+    return next(new ErrorHandler("Invite code is required", 400));
+  }
+
+  const project = await projectService.joinProjectByCode(
+    inviteCode.toUpperCase(),
+    studentId,
+  );
+
+  // Notify the group leader
+  await NotificationService.notifyUser(
+    project.createdBy,
+    `${req.user.name} has joined your group for project "${project.title}".`,
+    "Success",
+    "/student/dashboard",
+    "Medium",
+  );
+
+  await project.populate("members", "name email");
+  await project.populate("createdBy", "name email");
+
+  res.status(200).json({
+    success: true,
+    data: { project },
+    message: "Successfully joined the group",
+  });
+});
+
 export {
   getStudentProjects,
   submitProposal,
@@ -316,4 +413,6 @@ export {
   getDashBoardStats,
   getFeedback,
   downloadProjectFiles,
+  generateInviteCode,
+  joinGroup,
 };

@@ -10,6 +10,8 @@ import {
   getFeedback,
   getDashBoardStats,
   downloadProjectFiles,
+  generateInviteCode,
+  joinGroup,
 } from "../controllers/student.controllers.js";
 
 import { authMiddleware, authorized } from "../middlewares/auth.middleware.js";
@@ -92,5 +94,16 @@ router.get(
   authorized("Student"),
   downloadProjectFiles,
 );
+
+// Route to generate an invite code for the group
+router.post(
+  "/group/invite",
+  authMiddleware,
+  authorized("Student"),
+  generateInviteCode,
+);
+
+// Route to join a group via invite code
+router.post("/group/join", authMiddleware, authorized("Student"), joinGroup);
 
 export default router;

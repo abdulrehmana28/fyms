@@ -1,13 +1,30 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDashboardStats } from "../../store/slices/studentSlice";
+import {
+  fetchDashboardStats,
+  generateInviteCode,
+  joinGroup,
+} from "../../store/slices/studentSlice";
 import { Link } from "react-router-dom";
-import { Bell, MessageCircle, MessageCircleWarning } from "lucide-react";
+import {
+  Bell,
+  MessageCircle,
+  MessageCircleWarning,
+  Users,
+  Copy,
+  UserPlus,
+  ClipboardList,
+} from "lucide-react";
 
 const StudentDashboard = () => {
   const dispatch = useDispatch();
   const { authUser } = useSelector((state) => state.auth);
-  const { dashboardStats } = useSelector((state) => state.student);
+  const { dashboardStats, inviteCode, inviteCodeExpiresAt } = useSelector(
+    (state) => state.student,
+  );
+
+  const [joinCode, setJoinCode] = useState("");
+  const [isJoining, setIsJoining] = useState(false);
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
@@ -19,6 +36,34 @@ const StudentDashboard = () => {
   const feedbackList =
     dashboardStats?.feedbackNotifications?.slice(-2).reverse() || [];
   const topNotifications = dashboardStats?.topNotifications || [];
+  const groupMembers = project?.members || [];
+  const isLeader =
+    project?.createdBy?._id === authUser?._id ||
+    project?.createdBy === authUser?._id;
+
+  const handleGenerateInvite = () => {
+    dispatch(generateInviteCode());
+  };
+
+  const handleCopyCode = () => {
+    if (inviteCode) {
+      navigator.clipboard.writeText(inviteCode);
+    }
+  };
+
+  const handleJoinGroup = async () => {
+    if (!joinCode.trim()) return;
+    setIsJoining(true);
+    try {
+      await dispatch(joinGroup(joinCode.trim())).unwrap();
+      setJoinCode("");
+      dispatch(fetchDashboardStats());
+    } catch {
+      // handled in thunk
+    } finally {
+      setIsJoining(false);
+    }
+  };
 
   const formateDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -114,6 +159,126 @@ const StudentDashboard = () => {
           {/*  */}
         </div>
 
+        {/* Group Members & Invite / Join */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Group Members Card */}
+          <div className="card">
+            <div className="card-header flex items-center justify-between">
+              <h2 className="card-title flex items-center gap-2">
+                <Users className="h-5 w-5" /> Group Members
+              </h2>
+              <span className="text-sm text-slate-500">
+                {groupMembers.length}/{project?.maxMembers || 2} members
+              </span>
+            </div>
+            {groupMembers.length > 0 ? (
+              <div className="space-y-3 p-4">
+                {groupMembers.map((member) => {
+                  const m =
+                    typeof member === "object"
+                      ? member
+                      : { _id: member, name: "Loading..." };
+                  const isMeLeader =
+                    project?.createdBy?._id === m._id ||
+                    project?.createdBy === m._id;
+                  return (
+                    <div
+                      key={m._id}
+                      className="flex items-center justify-between p-3 bg-slate-50 rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-slate-800">
+                          {m.name || "Unknown"}
+                        </p>
+                        <p className="text-sm text-slate-500">
+                          {m.email || ""}
+                        </p>
+                      </div>
+                      {isMeLeader && (
+                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+                          Leader
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Users className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 text-sm">
+                  No project yet — submit a proposal or join a group
+                </p>
+              </div>
+            )}
+
+            {/* Invite section — only for leader when group not full */}
+            {isLeader &&
+              project?._id &&
+              groupMembers.length < (project?.maxMembers || 2) && (
+                <div className="border-t border-slate-200 p-4 space-y-3">
+                  <button
+                    onClick={handleGenerateInvite}
+                    className="btn btn-primary text-sm w-full"
+                  >
+                    Generate Invite Code
+                  </button>
+                  {inviteCode && (
+                    <div className="flex items-center gap-2 bg-slate-50 p-3 rounded-lg">
+                      <code className="flex-1 font-mono text-lg text-center tracking-widest">
+                        {inviteCode}
+                      </code>
+                      <button
+                        onClick={handleCopyCode}
+                        className="p-2 hover:bg-slate-200 rounded"
+                        title="Copy to clipboard"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  )}
+                  {inviteCodeExpiresAt && (
+                    <p className="text-xs text-slate-500 text-center">
+                      Expires: {new Date(inviteCodeExpiresAt).toLocaleString()}
+                    </p>
+                  )}
+                </div>
+              )}
+          </div>
+
+          {/* Join Group Card — only when student has no project */}
+          {!project?._id && (
+            <div className="card">
+              <div className="card-header">
+                <h2 className="card-title flex items-center gap-2">
+                  <UserPlus className="h-5 w-5" /> Join a Group
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Have an invite code? Enter it below to join your partner's
+                  project.
+                </p>
+              </div>
+              <div className="p-4 space-y-4">
+                <input
+                  type="text"
+                  value={joinCode}
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  placeholder="Enter invite code"
+                  className="input font-mono tracking-widest text-center text-lg"
+                  maxLength={16}
+                />
+                <button
+                  onClick={handleJoinGroup}
+                  disabled={isJoining || !joinCode.trim()}
+                  className="btn btn-primary w-full disabled:opacity-50"
+                >
+                  {isJoining ? "Joining..." : "Join Group"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Main content grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Project overview */}
@@ -121,42 +286,62 @@ const StudentDashboard = () => {
             <div className="card-header">
               <h2 className="card-title">Project Overview</h2>
             </div>
-            <div className="space-y-4"></div>
-            <div>
-              <label className="text-sm font-medium text-slate-600">
-                Title
-              </label>
-              <p className="text-slate-600 font-medium">
-                {project.title || "No Title"}
-              </p>
-            </div>
-            {/*  */}
-            <div>
-              <label className="text-sm font-medium text-slate-600">
-                Description
-              </label>
-              <p className="text-slate-600 font-medium">
-                {project.description || "No Description"}
-              </p>
-            </div>
-            {/*  */}
-            <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-slate-600">
-                status:
-              </label>
-              <span
-                className={`inline-flex items-center px-2 py-[2px] rounded-full text-sm font-medium capitalize ${project?.status === "Approved" ? "bg-green-100 text-green-800" : project?.status === "Pending" ? "bg-yellow-100 text-yellow-800" : project?.status === "Rejected" ? "bg-red-100 text-red-800" : "bg-gray-100 text-gray-800"}`}
-              >
-                {project.status || "No Status"}
-              </span>
-            </div>
-            {/*  */}
-            <label className="text-sm font-medium text-slate-600">
-              Submission Deadline
-            </label>
-            <p className="text-slate-800 font-medium">
-              {formateDate(project?.deadline)}
-            </p>
+            {project?._id ? (
+              <div className="space-y-4 p-4">
+                <div>
+                  <label className="text-sm font-medium text-slate-600">
+                    Title
+                  </label>
+                  <p className="text-slate-600 font-medium">
+                    {project.title || "No Title"}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-600">
+                    Description
+                  </label>
+                  <p className="text-slate-700 text-sm leading-relaxed">
+                    {project.description || "No Description"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-slate-600">
+                    Status:
+                  </label>
+                  <span
+                    className={`inline-flex items-center px-2 py-[2px] rounded-full text-sm font-medium capitalize ${
+                      project?.status === "Approved"
+                        ? "bg-green-100 text-green-800"
+                        : project?.status === "Pending"
+                          ? "bg-yellow-100 text-yellow-800"
+                          : project?.status === "Rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
+                    }`}
+                  >
+                    {project.status || "No Status"}
+                  </span>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-slate-600">
+                    Submission Deadline
+                  </label>
+                  <p className="text-slate-800 font-medium">
+                    {formateDate(project?.deadline)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <ClipboardList className="h-10 w-10 text-slate-300 mx-auto mb-3" />
+                <p className="text-slate-500 text-sm">
+                  No project details available
+                </p>
+                <p className="text-slate-400 text-xs mt-1">
+                  Submit a proposal or join a group to get started
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Latest Feedback */}

@@ -5,8 +5,9 @@ import {
   getAllUsers,
   assignSupervisor,
   getAllProjects,
+  addMemberToProject,
 } from "../../store/slices/adminSlice";
-import { AlertTriangle, CheckCircle, Users } from "lucide-react";
+import { AlertTriangle, CheckCircle, Users, UserPlus } from "lucide-react";
 
 const AssignSupervisor = () => {
   const dispatch = useDispatch();
@@ -14,6 +15,9 @@ const AssignSupervisor = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedSupervisor, setSelectedSupervisor] = useState({});
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [addMemberProjectId, setAddMemberProjectId] = useState(null);
+  const [addMemberStudentId, setAddMemberStudentId] = useState("");
 
   const { users, projects } = useSelector((state) => state.admin);
 
@@ -45,30 +49,44 @@ const AssignSupervisor = () => {
 
   const studentProjects = useMemo(() => {
     return (projects || [])
-      .filter((project) => !!project.student?._id)
-      .map((project) => ({
-        projectId: project._id,
-        title: project.title,
-        status: project.status,
-        supervisor: project.supervisor?.name || null,
-        supervisorId: project.supervisor?._id || null,
-        studentId: project.student?._id || null,
-        studentName: project.student?.name || "N/A",
-        studentEmail: project.student?.email || "N/A",
-        deadline: project.deadline
-          ? new Date(project.deadline).toISOString().slice(0, 10)
-          : "-",
-        updatedAt: project.updatedAt
-          ? new Date(project.updatedAt).toLocaleString()
-          : "N/A",
-        isApproved: project.status === "approved",
-      }));
+      .filter((project) => project.members?.length > 0 || project.createdBy)
+      .map((project) => {
+        const members = project.members || [];
+        const leader = project.createdBy || members[0] || {};
+        const leaderObj = typeof leader === "object" ? leader : { _id: leader };
+        const memberNames = members
+          .map((m) => (typeof m === "object" ? m.name : "Unknown"))
+          .join(", ");
+        return {
+          projectId: project._id,
+          title: project.title,
+          status: project.status,
+          supervisor: project.supervisor?.name || null,
+          supervisorId: project.supervisor?._id || null,
+          studentId: leaderObj._id || null,
+          studentName: leaderObj.name || "N/A",
+          studentEmail: leaderObj.email || "N/A",
+          members: members,
+          memberNames: memberNames || leaderObj.name || "N/A",
+          maxMembers: project.maxMembers || 2,
+          deadline: project.deadline
+            ? new Date(project.deadline).toISOString().slice(0, 10)
+            : "-",
+          updatedAt: project.updatedAt
+            ? new Date(project.updatedAt).toLocaleString()
+            : "N/A",
+          isApproved: project.status === "approved",
+        };
+      });
   }, [projects]);
 
   const filtered = useMemo(() => {
     return studentProjects.filter((row) => {
       const matchesSearch =
         (row.studentName || "")
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase()) ||
+        (row.memberNames || "")
           .toLowerCase()
           .includes(searchTerm.toLowerCase()) ||
         (row.title || "").toLowerCase().includes(searchTerm.toLowerCase());
@@ -101,7 +119,7 @@ const AssignSupervisor = () => {
     setPendingFor(projectId);
     try {
       const response = await dispatch(
-        assignSupervisor({ studentId, supervisorId }),
+        assignSupervisor({ studentId, supervisorId, projectId }),
       );
 
       if (assignSupervisor.fulfilled.match(response)) {
@@ -153,7 +171,7 @@ const AssignSupervisor = () => {
 
   // TABLE HEADER
   const headers = [
-    "Student",
+    "Leader / Members",
     "Project Title",
     "Supervisor",
     "Deadline",
@@ -248,11 +266,23 @@ const AssignSupervisor = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-slate-900">
-                          {row.studentName}
+                          {row.memberNames}
                         </div>
-                        <div className="text-sm font-medium text-slate-500">
-                          {row.studentEmail}
+                        <div className="text-xs font-medium text-slate-500">
+                          {row.members.length}/{row.maxMembers} members
                         </div>
+                        {row.members.length < row.maxMembers && (
+                          <button
+                            className="text-xs text-blue-600 hover:underline mt-1 flex items-center gap-1"
+                            onClick={() => {
+                              setAddMemberProjectId(row.projectId);
+                              setAddMemberStudentId("");
+                              setShowAddMemberModal(true);
+                            }}
+                          >
+                            <UserPlus className="h-3 w-3" /> Add member
+                          </button>
+                        )}
                       </div>
                     </td>
 
@@ -370,6 +400,69 @@ const AssignSupervisor = () => {
 
         {/* end div */}
       </div>
+
+      {/* Add Member Modal */}
+      {showAddMemberModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+              Add Member to Project
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="label">Select Student</label>
+                <select
+                  className="input-field w-full"
+                  value={addMemberStudentId}
+                  onChange={(e) => setAddMemberStudentId(e.target.value)}
+                >
+                  <option value="" disabled>
+                    Select a student
+                  </option>
+                  {(users || [])
+                    .filter(
+                      (u) => u.role?.toLowerCase() === "student" && !u.project,
+                    )
+                    .map((student) => (
+                      <option key={student._id} value={student._id}>
+                        {student.name} ({student.email})
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <div className="flex justify-end space-x-3">
+                <button
+                  className="btn-secondary"
+                  onClick={() => setShowAddMemberModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="btn-primary"
+                  disabled={!addMemberStudentId}
+                  onClick={async () => {
+                    try {
+                      await dispatch(
+                        addMemberToProject({
+                          projectId: addMemberProjectId,
+                          studentId: addMemberStudentId,
+                        }),
+                      ).unwrap();
+                      setShowAddMemberModal(false);
+                      dispatch(getAllProjects());
+                      dispatch(getAllUsers());
+                    } catch {
+                      // error handled in thunk
+                    }
+                  }}
+                >
+                  Add Member
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };
