@@ -14,7 +14,6 @@ const downloadProjectFiles = createAsyncThunk(
       );
       return { blob: response.data, fileId, projectId };
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to download file");
       return thunkAPI.rejectWithValue(
         error.response?.data || { message: error.message },
       );

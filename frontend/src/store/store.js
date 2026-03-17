@@ -27,7 +27,7 @@ export const store = configureStore({
         // Ignore these paths in the state
         ignoredPaths: ["student.files", "supervisor.files", "project.files"],
         // Ignore these action types
-        ignoredActionPaths: ["payload.blob"],
+        ignoredActionPaths: ["payload.blob", "meta.arg"],
       },
     }),
 });

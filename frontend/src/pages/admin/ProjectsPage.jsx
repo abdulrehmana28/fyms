@@ -101,10 +101,20 @@ const ProjectsPage = () => {
   // TODO: refactor this to handle the functionality in the backend because i just copied the code from the student page and it is not working because of the different structure of the data in the admin page and also because of the different way of handling the files in the admin page
 
   const handleDownloadFile = async (file) => {
-    const res = await dispatch(
+    await dispatch(
       downloadProjectFiles({ projectId: file.projectId, fileId: file.fileId }),
     ).then((res) => {
+      if (res.error) {
+        toast.error(res.payload?.message || "Failed to download file");
+        return;
+      }
+
       const { blob } = res.payload;
+      if (!blob) {
+        toast.error("File data is missing");
+        return;
+      }
+
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement("a");
       link.href = url;

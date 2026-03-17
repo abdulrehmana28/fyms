@@ -36,7 +36,13 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
 
 // Authorization middleware checking user roles
 
-const authorized = (...roles) => {
+const authorized = (...rolesOrArray) => {
+  // Support both authorized("Admin", "Student") and authorized(["Admin", "Student"])
+  const roles =
+    rolesOrArray.length === 1 && Array.isArray(rolesOrArray[0])
+      ? rolesOrArray[0]
+      : rolesOrArray;
+
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
       return next(

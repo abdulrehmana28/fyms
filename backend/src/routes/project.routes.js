@@ -9,7 +9,7 @@ const router = Router();
 router.get(
   "/:projectId/files/:fileId/download",
   authMiddleware,
-  authorized(["Admin", "Supervisor", "Student"]),
+  authorized("Admin", "Supervisor", "Student"),
   downloadProjectFiles,
 );
 
