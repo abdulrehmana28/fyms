@@ -71,7 +71,10 @@ const UploadFiles = () => {
   };
 
   const handleDownloadFile = async (file) => {
-    if (!file?.projectId || !file?.fileId) return;
+    if (!project?._id || !file?._id) {
+      toast.error("Project or file information is missing.");
+      return;
+    }
 
     // Dispatch download action
     await dispatch(
@@ -80,12 +83,15 @@ const UploadFiles = () => {
         fileId: file._id,
       }),
     ).then((response) => {
+      if (response.error) return;
+
       // Create a blob link to download
       const { blob } = response.payload;
-      const url = window.URL.createObjectURL(new Blob([blob]));
+      const downloadBlob = blob instanceof Blob ? blob : new Blob([blob]);
+      const url = window.URL.createObjectURL(downloadBlob);
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", file.name || "download");
+      link.setAttribute("download", file.originalName || "download");
       document.body.appendChild(link);
       link.click();
       link.parentNode.removeChild(link);

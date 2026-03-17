@@ -21,4 +21,13 @@ export const store = configureStore({
     student: studentReducer,
     supervisor: supervisorReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        // Ignore these paths in the state
+        ignoredPaths: ["student.files", "supervisor.files", "project.files"],
+        // Ignore these action types
+        ignoredActionPaths: ["payload.blob"],
+      },
+    }),
 });
