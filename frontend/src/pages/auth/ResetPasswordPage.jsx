@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { BookOpen, Loader } from "lucide-react";
+import { BookOpen, Loader, Eye, EyeOff } from "lucide-react";
 import { resetPassword } from "../../store/slices/authSlice";
 
 const ResetPasswordPage = () => {
@@ -11,6 +11,8 @@ const ResetPasswordPage = () => {
   });
   const [errors, setErrors] = useState({});
   const [noToken, setNoToken] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [searchParams] = useSearchParams();
 
@@ -135,14 +137,29 @@ const ResetPasswordPage = () => {
               {/* Password Input */}
               <div>
                 <label className="label">New Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`input ${errors.password ? "input-error" : ""}`}
-                  placeholder="Enter Your New Password"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`input pr-10 ${
+                      errors.password ? "input-error" : ""
+                    }`}
+                    placeholder="Enter Your New Password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="text-red-600 mt-1 text-sm">{errors.password}</p>
                 )}
@@ -150,16 +167,31 @@ const ResetPasswordPage = () => {
               {/* Confirm Password Input */}
               <div>
                 <label className="label">Confirm New Password</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className={`input ${
-                    errors.confirmPassword ? "input-error" : ""
-                  }`}
-                  placeholder="Confirm Your New Password"
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className={`input pr-10 ${
+                      errors.confirmPassword ? "input-error" : ""
+                    }`}
+                    placeholder="Confirm Your New Password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setShowConfirmPassword(!showConfirmPassword)
+                    }
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
                 {errors.confirmPassword && (
                   <p className="text-red-600 mt-1 text-sm">
                     {errors.confirmPassword}

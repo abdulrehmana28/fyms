@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { createStudent } from "../../store/slices/adminSlice";
 import { toggleStudentModal } from "../../store/slices/popupSlice";
-import { X } from "lucide-react";
+import { X, Eye, EyeOff } from "lucide-react";
 
 //TODO: Restore departments list when backend is ready
 const departments = [
@@ -15,6 +15,7 @@ const departments = [
 
 const AddStudent = () => {
   const dispatch = useDispatch();
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -90,15 +91,28 @@ const AddStudent = () => {
               <label className="block text-sm font-medium text-slate-700 mb-1">
                 Password
               </label>
-              <input
-                type="password"
-                required
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                className="input-field w-full py-1 px-2 border-b border-slate-600 focus:outline-none rounded-md"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  className="input-field w-full py-1 px-2 border-b border-slate-600 focus:outline-none rounded-md pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
             </div>
 
             <div>

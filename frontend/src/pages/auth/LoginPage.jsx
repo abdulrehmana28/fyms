@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { login } from "../../store/slices/authSlice";
-import { Loader, Rotate3D } from "lucide-react";
+import { Loader, Rotate3D, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const LoginPage = () => {
@@ -15,6 +15,7 @@ const LoginPage = () => {
   });
 
   const [errors, setErrors] = useState({});
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -127,14 +128,29 @@ const LoginPage = () => {
               {/* Password Input */}
               <div>
                 <label className="label">Password</label>
-                <input
-                  type="password"
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`input ${errors.password ? "input-error" : ""}`}
-                  placeholder="Enter Your Password"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    className={`input pr-10 ${
+                      errors.password ? "input-error" : ""
+                    }`}
+                    placeholder="Enter Your Password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
                 {errors.password && (
                   <p className="text-red-600 mt-1 text-sm ">
                     {errors.password}
